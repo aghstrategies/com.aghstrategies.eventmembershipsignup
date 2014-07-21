@@ -15,7 +15,7 @@
 {* reposition the above block after #someOtherBlock *}
 <script type="text/javascript">
 {literal}
-CRM.$(function ($) {
+cj(function ($) {
 {/literal}
   var i = {$i};
 {literal}

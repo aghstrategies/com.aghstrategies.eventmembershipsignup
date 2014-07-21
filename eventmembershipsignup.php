@@ -14,7 +14,7 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
       'sequential' => 1,
       ));
     foreach ($result['values'] as $membershipType){
-      $membershipSelector[$membershipType['id']] = $membershipType['name'];
+      $membershipSelector[$membershipType['id']] = $membershipType['name'].': '.$membershipType['minimum_fee'];
     }
     $result = civicrm_api3('Event', 'get', array(
       'sequential' => 1,
@@ -47,21 +47,24 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
   }
   elseif ($formName=='CRM_Price_Form_Option'){
     $id = $form->getVar('_oid');
-    $option_signup_id = 0;
+    $form->assign('option_signup_id', 0);
+    $form->assign('signupselectvalue', 0);
+    $form->assign('eventmembershipvalue', 0);
     $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = {$id};";
     $dao = CRM_Core_DAO::executeQuery($sql);
     if ($dao->fetch()){
-      $option_signup_id = $dao->id;
-      $signupselectdefault = $dao->entity_table;
-      $defaultid = $dao->entity_ref_id;
+      $form->assign('option_signup_id', $dao->id);
+      $form->assign('signupselectvalue', $dao->entity_table);
+      $form->assign('eventmembershipvalue', $dao->entity_ref_id);
     }
+
     $membershipSelector = array();
     $eventSelector = array();
     $result = civicrm_api3('MembershipType', 'get', array(
       'sequential' => 1,
       ));
     foreach ($result['values'] as $membershipType){
-      $membershipSelector[$membershipType['id']] = $membershipType['name'];
+      $membershipSelector[$membershipType['id']] = $membershipType['name'].': '.$membershipType['minimum_fee'];
     }
     $result = civicrm_api3('Event', 'get', array(
       'sequential' => 1,
@@ -74,20 +77,6 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
     $form->add('select', 'othersignup', ts('Other Sign Up?'), $entityOptions);
     $form->add('select', 'membershipselect', ts('Select Membership Type'), $membershipSelector);
     $form->add('select', 'eventselect', ts('Select Event'), $eventSelector);
-    if ($option_signup_id) {
-      $defaults['othersignup'] = $signupselectdefault;
-      switch ($signupselectdefault){
-        case 'MembershipType':
-        $defaults['membershipselect'] = $defaultid;
-        break;
-        case 'Event':
-        $defaults['eventselect'] = $defaultid;
-        break;
-        default:
-        break;
-      }
-      $form->setDefaults($defaults);
-    }
     // Assumes templates are in a templates folder relative to this file
     $templatePath = realpath(dirname(__FILE__)."/templates");
     // dynamically insert a template block in the page
@@ -178,7 +167,6 @@ function save_new_othersignup($price_option_id, $entity_table, $entity_ref_id){
  * Implementation of hook_civicrm_post
  */
 function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
-  print_r($objectRef); die();
   if ($op == 'create' && $objectName == 'LineItem') {
     $price_field_value_id = 0;
     $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objectRef['price_field_value_id']};";
