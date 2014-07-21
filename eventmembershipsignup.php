@@ -6,7 +6,8 @@ require_once 'eventmembershipsignup.civix.php';
  * Implementation of hook_civicrm_buildForm
  */
 function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
-  if ($formName=='CRM_Price_Form_Field'){
+  if ($formName=='CRM_Price_Form_Field') {
+//and is_null($form->getVar('_fid'))
     $membershipSelector = array();
     $eventSelector = array();
     $result = civicrm_api3('MembershipType', 'get', array(
@@ -102,43 +103,82 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
  */
 function eventmembershipsignup_civicrm_postProcess( $formName, &$form ) {
   if ($formName=='CRM_Price_Form_Field'){
+    $sql = "SELECT id FROM civicrm_price_field ORDER BY id DESC LIMIT 1;";
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    while ($dao->fetch()){
+      $price_field_id = $dao->id;
+    }
+    $sql = "SELECT id FROM civicrm_price_field_value WHERE price_field_id=$price_field_id ORDER BY id ASC;";
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    $price_option_ids = array(0);
+    while ($dao->fetch()){
+      $price_option_ids[] = $dao->id;
+    }
+    $numOptions = count($price_option_ids);
+    $othersignups = $form->_submitValues['othersignup'];
+    $membershipselects = $form->_submitValues['membershipselect'];
+    $eventselects = $form->_submitValues['eventselect'];
+    foreach($form->_submitValues['othersignup'] as $price_option_key => $price_option_othersignup){
+      if ($price_option_othersignup){
+        switch ($price_option_othersignup){
+          case 'Membership':
+          $entity_ref_id = $membershipselects[$price_option_key];
+          $entity_table = 'MembershipType';
+          break;
+          case 'Participant':
+          $entity_ref_id = $eventselects[$price_option_key];
+          $entity_table = 'Event';
+          break;
+          default:
+          break;
+        }
+        if ($price_option_key <= $numOptions and !is_null($price_option_ids[$price_option_key]) and $price_option_othersignup){
+          save_new_othersignup($price_option_ids[$price_option_key], $entity_table, $entity_ref_id);
+        }
+      }
+    }
   }
   elseif ($formName=='CRM_Price_Form_Option'){
     $id = $form->getVar('_oid');
-    $option_signup_id = 0;
-    $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = {$id};";
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    if ($dao->fetch()){
-      $option_signup_id = $dao->id;
+    switch ($form->_submitValues['othersignup']){
+      case 'Membership':
+      $entity_ref_id = $form->_submitValues['membershipselect'];
+      $entity_table = 'MembershipType';
+      break;
+      case 'Participant':
+      $entity_ref_id = $form->_submitValues['eventselect'];
+      $entity_table = 'Event';
+      break;
+      default:
+      break;
     }
-    if ($form->_submitValues['othersignup']){
-      switch ($form->_submitValues['othersignup']){
-        case 'Membership':
-        $entity_ref_id = $form->_submitValues['membershipselect'];
-        $entity_table = 'MembershipType';
-        break;
-        case 'Participant':
-        $entity_ref_id = $form->_submitValues['eventselect'];
-        $entity_table = 'Event';
-        break;
-        default:
-        break;
-      }
-      if ($option_signup_id){
-        $sql = "UPDATE civicrm_option_signup SET entity_ref_id={$entity_ref_id}, entity_table=\"{$entity_table}\" WHERE id={$option_signup_id};";
-      }
-      else{
-        $sql = "INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id) VALUES ({$id}, \"{$entity_table}\", {$entity_ref_id});";
-      }
-      $dao = CRM_Core_DAO::executeQuery($sql);
+    if ($form->_submitValues['othersignup']) {
+      save_new_othersignup($id, $entity_table, $entity_ref_id);
     }
   }
+}
+
+function save_new_othersignup($price_option_id, $entity_table, $entity_ref_id){
+  $option_signup_id = 0;
+  $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = {$price_option_id};";
+  $dao = CRM_Core_DAO::executeQuery($sql);
+  if ($dao->fetch()){
+  $option_signup_id = $dao->id;
+  }
+    if ($option_signup_id){
+      $sql = "UPDATE civicrm_option_signup SET entity_ref_id={$entity_ref_id}, entity_table=\"{$entity_table}\" WHERE id={$option_signup_id};";
+    }
+    else{
+      $sql = "INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id) VALUES ({$price_option_id}, \"{$entity_table}\", {$entity_ref_id});";
+    }
+    $dao = CRM_Core_DAO::executeQuery($sql);
 }
 
 /**
  * Implementation of hook_civicrm_post
  */
 function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
+  print_r($objectRef); die();
   if ($op == 'create' && $objectName == 'LineItem') {
     $price_field_value_id = 0;
     $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objectRef['price_field_value_id']};";
