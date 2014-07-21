@@ -10,22 +10,25 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
     $membershipSelector = array();
     $eventSelector = array();
     $result = civicrm_api3('MembershipType', 'get', array(
-    'sequential' => 1,
-    ));
+      'sequential' => 1,
+      ));
     foreach ($result['values'] as $membershipType){
       $membershipSelector[$membershipType['id']] = $membershipType['name'];
     }
     $result = civicrm_api3('Event', 'get', array(
-    'sequential' => 1,
-    ));
+      'sequential' => 1,
+      ));
     foreach ($result['values'] as $event){
       $eventSelector[$event['id']] = $event['title'];
     }
     $numOptions = $form::NUM_OPTION;
+    $entityOptions = array(0 => 'No', 'Membership' => 'Membership', 'Participant' => 'Participant');
     $selectors = array();
     for ($i = 1; $i <= $numOptions; $i++){
-      $form->add('checkbox', "othersignup[$i]", ts('Other Sign Up?'));
+    // Add the field element in the form
+      $form->add('select', "othersignup[$i]", ts('Other Sign Up?'), $entityOptions);
       $form->add('select', "membershipselect[$i]", ts('Select Membership Type'), $membershipSelector);
+      $form->add('select', "eventselect[$i]", ts('Select Event'), $eventSelector);
       $selectors[] = $i;
     }
     $form->assign('numOptions', $numOptions);
@@ -38,7 +41,7 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
     $form->add('select', 'memberSelect', '');
     CRM_Core_Region::instance('page-body')->add(array(
       'template' => "{$templatePath}/pricefieldOthersignup.tpl"
-     ));
+      ));
 
   }
   elseif ($formName=='CRM_Price_Form_Option'){
@@ -54,14 +57,14 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
     $membershipSelector = array();
     $eventSelector = array();
     $result = civicrm_api3('MembershipType', 'get', array(
-    'sequential' => 1,
-    ));
+      'sequential' => 1,
+      ));
     foreach ($result['values'] as $membershipType){
       $membershipSelector[$membershipType['id']] = $membershipType['name'];
     }
     $result = civicrm_api3('Event', 'get', array(
-    'sequential' => 1,
-    ));
+      'sequential' => 1,
+      ));
     foreach ($result['values'] as $event){
       $eventSelector[$event['id']] = $event['title'];
     }
@@ -74,10 +77,10 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
       $defaults['othersignup'] = $signupselectdefault;
       switch ($signupselectdefault){
         case 'MembershipType':
-          $defaults['membershipselect'] = $defaultid;
-          break;
+        $defaults['membershipselect'] = $defaultid;
+        break;
         case 'Event':
-          $defaults['eventselect'] = $defaultid;
+        $defaults['eventselect'] = $defaultid;
         break;
         default:
         break;
@@ -89,7 +92,7 @@ function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
     // dynamically insert a template block in the page
     CRM_Core_Region::instance('page-body')->add(array(
       'template' => "{$templatePath}/priceoptionOthersignup.tpl"
-     ));
+      ));
 
   }
 }
@@ -111,12 +114,12 @@ function eventmembershipsignup_civicrm_postProcess( $formName, &$form ) {
     if ($form->_submitValues['othersignup']){
       switch ($form->_submitValues['othersignup']){
         case 'Membership':
-          $entity_ref_id = $form->_submitValues['membershipselect'];
-          $entity_table = 'MembershipType';
+        $entity_ref_id = $form->_submitValues['membershipselect'];
+        $entity_table = 'MembershipType';
         break;
         case 'Participant':
-          $entity_ref_id = $form->_submitValues['eventselect'];
-          $entity_table = 'Event';
+        $entity_ref_id = $form->_submitValues['eventselect'];
+        $entity_table = 'Event';
         break;
         default:
         break;
@@ -137,6 +140,7 @@ function eventmembershipsignup_civicrm_postProcess( $formName, &$form ) {
  */
 function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
   if ($op == 'create' && $objectName == 'LineItem') {
+    $price_field_value_id = 0;
     $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objectRef['price_field_value_id']};";
     $dao = CRM_Core_DAO::executeQuery($sql);
     if ($dao->fetch()){
@@ -145,57 +149,59 @@ function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$obje
       $entity_table = $dao->entity_table;
       $entity_ref_id = $dao->entity_ref_id;
     }
-         if ($objectRef['price_field_value_id']==$price_field_value_id){
-          try{
-            $participant = civicrm_api('participant', 'getSingle', array(
-              'version' => 3,
-              'id' => $objectRef['entity_id'],
-            ));
-          }
-          catch (CiviCRM_API3_Exception $e) {
-            $error = $e->getMessage();
-          }
-          if ($participant['event_id']==1){ //Larry's Ride Registration Form
-              $registerEventId = 2; //id of event for new participant
-              $routeRegister = 'custom_4'; //route for new participant
-          }
-          if ($participant['event_id']==2){//Tour du Port Registration Form
-              $registerEventId = 1; //Larry's Ride
-              $routeRegister = 'custom_3'; //Larry's Ride route
-          }
-          try{
-            $participantRoute = civicrm_api('participant', 'getSingle', array(
-              'version' => 3,
-              'id' => $objectRef['entity_id'],
-               'return' => $routeRegister,
-            ));
-          }
-          catch (CiviCRM_API3_Exception $e) {
-            $error = $e->getMessage();
-          }
-
-           try{
-            $newParticipant = civicrm_api('participant', 'create', array(
-              'version' => 3,
-              'event_id' => $registerEventId,
-              $routeRegister => $participantRoute[$routeRegister],
-              'contact_id' => $participant['contact_id'],
-              'participant_register_date' => $participant['participant_register_date'],
-              'participant_source' => $participant['participant_source'],
-           //   'participant_fee_amount' => $participant['participant_fee_amount'],
-        //      'participant_fee_level' => $participant['participant_fee_level'],
-           //   'participant_fee_currency' => $participant['participant_fee_currency'],
-              'participant_status' => $participant['participant_status'],
-              'participant_is_pay_later' => $participant['participant_is_pay_later'],
-              'participant_registered_by_id' => $participant['participant_registered_by_id'],
-              'participant_role_id' => $participant['participant_role_id'],
-            ));
-          }
-          catch (CiviCRM_API3_Exception $e) {
-            $error = $e->getMessage();
-          }
-         }
+    if ($price_field_value_id){
+      try{
+        $participant = civicrm_api('participant', 'getSingle', array(
+          'version' => 3,
+          'id' => $objectRef['entity_id'],
+          ));
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        $error = $e->getMessage();
+      }
+      if ($entity_table=='Event'){
+       try{
+        $newParticipant = civicrm_api('participant', 'create', array(
+          'version' => 3,
+          'event_id' => $entity_ref_id,
+          'contact_id' => $participant['contact_id'],
+          'participant_register_date' => $participant['participant_register_date'],
+          'participant_source' => $participant['participant_source'],
+         //   'participant_fee_amount' => $participant['participant_fee_amount'],
+      //      'participant_fee_level' => $participant['participant_fee_level'],
+         //   'participant_fee_currency' => $participant['participant_fee_currency'],
+          'participant_status' => $participant['participant_status'],
+          'participant_is_pay_later' => $participant['participant_is_pay_later'],
+          'participant_registered_by_id' => $participant['participant_registered_by_id'],
+          'participant_role_id' => $participant['participant_role_id'],
+          ));
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        $error = $e->getMessage();
+      }
+    }
+    else if ($entity_table=='MembershipType'){
+       try{
+        $newMembership = civicrm_api('Membership', 'create', array(
+          'version' => 3,
+          'membership_type_id' => $entity_ref_id,
+          'contact_id' => $participant['contact_id'],
+          'join_date' => $participant['participant_register_date'],
+          'start_date' => $participant['participant_register_date'],
+         //   'participant_fee_amount' => $participant['participant_fee_amount'],
+      //      'participant_fee_level' => $participant['participant_fee_level'],
+         //   'participant_fee_currency' => $participant['participant_fee_currency'],
+          'status_id' => 1,
+          'is_pay_later' >= $participant['participant_is_pay_later'],
+          'source' => 'Event Sign Up',
+          ));
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        $error = $e->getMessage();
+      }
+    }
   }
+}
 }
 
 /**

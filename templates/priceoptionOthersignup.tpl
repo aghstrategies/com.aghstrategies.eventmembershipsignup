@@ -17,8 +17,6 @@
 <script type="text/javascript">
    cj('#other-sign-up').insertAfter('.crm-price-option-form-block-is_default');
    cj('#other-sign-up-header').insertAfter('.crm-price-option-form-block-is_default');
-   cj('.crm-price-option-membershiptype').hide();
-   cj('.crm-price-option-event').hide();
    cj('#othersignup').change(function(){
       if (cj('#othersignup').val()=='Membership'){
        cj('.crm-price-option-membershiptype').show();
@@ -34,5 +32,17 @@
 
       }
    });
+      if (cj('#othersignup').val()=='Membership'){
+       cj('.crm-price-option-membershiptype').show();
+       cj('.crm-price-option-event').hide();
+      }
+      else if (cj('#othersignup').val()=='Participant'){
+       cj('.crm-price-option-membershiptype').hide();
+       cj('.crm-price-option-event').show();
+      }
+      else if(cj('#othersignup').val()==0){
+       cj('.crm-price-option-membershiptype').hide();
+       cj('.crm-price-option-event').hide();
+      }
 </script>
 {/literal}
