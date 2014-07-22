@@ -16,48 +16,52 @@
   </tbody>
 </table>
 <script type="text/javascript">
-var optionSignUp = {$option_signup_id};
-var signupselectvalue = "{$signupselectvalue}";
-var eventmembershipvalue = {$eventmembershipvalue};
 {literal}
-var signupKeys = {MembershipType:'Membership', Event:'Participant'};
-   if (optionSignUp){
-     cj('select#othersignup').val(signupKeys[signupselectvalue]);
-     if (signupKeys[signupselectvalue]=='Membership'){
-       cj('#membershipselect').val(eventmembershipvalue);
-     }
-     else if (signupKeys[signupselectvalue]=='Participant'){
-       cj('#eventselect').val(eventmembershipvalue);
-     }
+cj(function($){
+{/literal}
+  var optionSignUp = {$option_signup_id};
+  var signupselectvalue = "{$signupselectvalue}";
+  var eventmembershipvalue = {$eventmembershipvalue};
+{literal}
+  var signupKeys = {MembershipType:'Membership', Event:'Participant'};
+  if (optionSignUp){
+   $('select#othersignup').val(signupKeys[signupselectvalue]);
+   if (signupKeys[signupselectvalue]=='Membership'){
+     $('#membershipselect').val(eventmembershipvalue);
    }
-   cj('#other-sign-up').insertAfter('.crm-price-option-form-block-is_default');
-   cj('#other-sign-up-header').insertAfter('.crm-price-option-form-block-is_default');
-   cj('#othersignup').change(function(){
-      if (cj('#othersignup').val()=='Membership'){
-       cj('.crm-price-option-membershiptype').show();
-       cj('.crm-price-option-event').hide();
-      }
-      else if (cj('#othersignup').val()=='Participant'){
-       cj('.crm-price-option-membershiptype').hide();
-       cj('.crm-price-option-event').show();
-      }
-      else if(cj('#othersignup').val()==0){
-       cj('.crm-price-option-membershiptype').hide();
-       cj('.crm-price-option-event').hide();
+   else if (signupKeys[signupselectvalue]=='Participant'){
+     $('#eventselect').val(eventmembershipvalue);
+   }
+  }
+  $('#other-sign-up').insertAfter('.crm-price-option-form-block-is_default');
+  $('#other-sign-up-header').insertAfter('.crm-price-option-form-block-is_default');
+  $('#othersignup').change(function(){
+    if ($('#othersignup').val()=='Membership'){
+     $('.crm-price-option-membershiptype').show();
+     $('.crm-price-option-event').hide();
+    }
+    else if ($('#othersignup').val()=='Participant'){
+     $('.crm-price-option-membershiptype').hide();
+     $('.crm-price-option-event').show();
+    }
+    else if($('#othersignup').val()==0){
+     $('.crm-price-option-membershiptype').hide();
+     $('.crm-price-option-event').hide();
 
-      }
-   });
-      if (cj('#othersignup').val()=='Membership'){
-       cj('.crm-price-option-membershiptype').show();
-       cj('.crm-price-option-event').hide();
-      }
-      else if (cj('#othersignup').val()=='Participant'){
-       cj('.crm-price-option-membershiptype').hide();
-       cj('.crm-price-option-event').show();
-      }
-      else if(cj('#othersignup').val()==0){
-       cj('.crm-price-option-membershiptype').hide();
-       cj('.crm-price-option-event').hide();
-      }
+    }
+  });
+  if ($('#othersignup').val()=='Membership'){
+   $('.crm-price-option-membershiptype').show();
+   $('.crm-price-option-event').hide();
+  }
+  else if ($('#othersignup').val()=='Participant'){
+   $('.crm-price-option-membershiptype').hide();
+   $('.crm-price-option-event').show();
+  }
+  else if($('#othersignup').val()==0){
+   $('.crm-price-option-membershiptype').hide();
+   $('.crm-price-option-event').hide();
+  }
+});  
 </script>
 {/literal}

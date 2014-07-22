@@ -19,36 +19,36 @@ cj(function ($) {
 {/literal}
   var i = {$i};
 {literal}
-   var weightHeaderSelector = cj('#optionField').children('tbody').children('tr').filter(':first').children('th').filter(':nth-child(8n)');
-   cj('#othersignup-header').insertAfter(weightHeaderSelector);
-   cj('#eventselect_'+i).insertAfter(cj('#option_weight_'+i).parent());
-   cj('#membershipselect_'+i).insertAfter(cj('#option_weight_'+i).parent());
-   cj('#othersignup_'+i).insertAfter(cj('#option_weight_'+i).parent());
-   cj('#othersignup_'+i).change(function(){
-      if (cj(this).val()=='Membership'){
-       cj('#membershipselect_'+i).show();
-       cj('#eventselect_'+i).hide();
+   var weightHeaderSelector = $('#optionField').children('tbody').children('tr').filter(':first').children('th').filter(':nth-child(8n)');
+   $('#othersignup-header').insertAfter(weightHeaderSelector);
+   $('#eventselect_'+i).insertAfter($('#option_weight_'+i).parent());
+   $('#membershipselect_'+i).insertAfter($('#option_weight_'+i).parent());
+   $('#othersignup_'+i).insertAfter($('#option_weight_'+i).parent());
+   $('#othersignup_'+i).change(function(){
+      if ($(this).val()=='Membership'){
+       $('#membershipselect_'+i).show();
+       $('#eventselect_'+i).hide();
       }
-      else if (cj(this).val()=='Participant'){
-       cj('#membershipselect_'+i).hide();
-       cj('#eventselect_'+i).show();
+      else if ($(this).val()=='Participant'){
+       $('#membershipselect_'+i).hide();
+       $('#eventselect_'+i).show();
       }
-      else if(cj(this).val()==0){
-       cj('#membershipselect_'+i).hide();
-       cj('#eventselect_'+i).hide();
+      else if($(this).val()==0){
+       $('#membershipselect_'+i).hide();
+       $('#eventselect_'+i).hide();
       }
    });
-      if (cj('#othersignup_'+i).val()=='Membership'){
-       cj('#membershipselect_'+i).show();
-       cj('#eventselect_'+i).hide();
+      if ($('#othersignup_'+i).val()=='Membership'){
+       $('#membershipselect_'+i).show();
+       $('#eventselect_'+i).hide();
       }
-      else if (cj('#othersignup_'+i).val()=='Participant'){
-       cj('#membershipselect_'+i).hide();
-       cj('#eventselect_'+i).show();
+      else if ($('#othersignup_'+i).val()=='Participant'){
+       $('#membershipselect_'+i).hide();
+       $('#eventselect_'+i).show();
       }
-      else if(cj('#othersignup_'+i).val()==0){
-       cj('#membershipselect_'+i).hide();
-       cj('#eventselect_'+i).hide();
+      else if($('#othersignup_'+i).val()==0){
+       $('#membershipselect_'+i).hide();
+       $('#eventselect_'+i).hide();
       }
   });
 {/literal}
