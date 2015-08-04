@@ -1,58 +1,59 @@
 <?php
+// TODO: Handle $error from catch
 
 require_once 'eventmembershipsignup.civix.php';
 
 /**
   * Saves othersignup
   */
-function save_new_othersignup($price_option_id, $entity_table, $entity_ref_id){
+function save_new_othersignup($price_option_id, $entity_table, $entity_ref_id) {
   $option_signup_id = 0;
   $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = {$price_option_id};";
   $dao = CRM_Core_DAO::executeQuery($sql);
-  if ($dao->fetch()){
-  $option_signup_id = $dao->id;
+  if ($dao->fetch()) {
+    $option_signup_id = $dao->id;
   }
-    if ($option_signup_id){
-      $sql = "UPDATE civicrm_option_signup SET entity_ref_id={$entity_ref_id}, entity_table=\"{$entity_table}\" WHERE id={$option_signup_id};";
-    }
-    else{
-      $sql = "INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id) VALUES ({$price_option_id}, \"{$entity_table}\", {$entity_ref_id});";
-    }
+  if ($option_signup_id) {
+    $sql = "UPDATE civicrm_option_signup SET entity_ref_id={$entity_ref_id}, entity_table=\"{$entity_table}\" WHERE id={$option_signup_id};";
+  }
+  else {
+    $sql = "INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id) VALUES ({$price_option_id}, \"{$entity_table}\", {$entity_ref_id});";
+  }
   $dao = CRM_Core_DAO::executeQuery($sql);
 }
 
 /**
  * Implementation of hook_civicrm_buildForm
  */
-function eventmembershipsignup_civicrm_buildForm( $formName, &$form ) {
-  require_once('buildForm.php');
+function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
+  require_once 'buildForm.php';
 }
 
 /**
  * Implementation of hook_civicrm_postProcess
  */
-function eventmembershipsignup_civicrm_postProcess( $formName, &$form ) {
-require_once('postProcess.php');
+function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
+  require_once 'postProcess.php';
 }
 
 
 /**
  * Implementation of hook_civicrm_post
  */
-function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
-//save new registration or membership
+function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+  // Save new registration or membership.
   if ($op == 'create' && $objectName == 'LineItem') {
     $price_field_value_id = 0;
     $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objectRef['price_field_value_id']};";
     $dao = CRM_Core_DAO::executeQuery($sql);
-    if ($dao->fetch()){
+    if ($dao->fetch()) {
       $option_signup_id = $dao->id;
       $price_field_value_id = $dao->price_option_id;
       $entity_table = $dao->entity_table;
       $entity_ref_id = $dao->entity_ref_id;
     }
-    if ($price_field_value_id){
-      try{
+    if ($price_field_value_id) {
+      try {
         $participant = civicrm_api('participant', 'getSingle', array(
           'version' => 3,
           'id' => $objectRef['entity_id'],
@@ -61,8 +62,8 @@ function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$obje
       catch (CiviCRM_API3_Exception $e) {
         $error = $e->getMessage();
       }
-      if ($entity_table=='Event'){
-        try{
+      if ($entity_table == 'Event') {
+        try {
           $newParticipant = civicrm_api('participant', 'create', array(
             'version' => 3,
             'event_id' => $entity_ref_id,
@@ -82,8 +83,8 @@ function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$obje
           $error = $e->getMessage();
         }
       }
-      else if ($entity_table=='MembershipType'){
-         try{
+      elseif ($entity_table == 'MembershipType') {
+        try {
           $newMembership = civicrm_api('Membership', 'create', array(
             'version' => 3,
             'membership_type_id' => $entity_ref_id,
@@ -91,12 +92,12 @@ function eventmembershipsignup_civicrm_post( $op, $objectName, $objectId, &$obje
             'join_date' => $participant['participant_register_date'],
             'start_date' => $participant['participant_register_date'],
            //   'participant_fee_amount' => $participant['participant_fee_amount'],
-        //      'participant_fee_level' => $participant['participant_fee_level'],
+          //      'participant_fee_level' => $participant['participant_fee_level'],
            //   'participant_fee_currency' => $participant['participant_fee_currency'],
             'status_id' => 1,
-            'is_pay_later' >= $participant['participant_is_pay_later'],
+            'is_pay_later' => $participant['participant_is_pay_later'],
             'source' => 'Event Sign Up',
-            ));
+          ));
         }
         catch (CiviCRM_API3_Exception $e) {
           $error = $e->getMessage();
@@ -115,8 +116,8 @@ function eventmembershipsignup_civicrm_config(&$config) {
 
 /**
  * Implementation of hook_civicrm_xmlMenu
-
-* * @param $files array(string)
+ *
+ * @param $files array(string)
  */
 function eventmembershipsignup_civicrm_xmlMenu(&$files) {
   _eventmembershipsignup_civix_civicrm_xmlMenu($files);

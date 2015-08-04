@@ -62,6 +62,6 @@ cj(function($){
    $('.crm-price-option-membershiptype').hide();
    $('.crm-price-option-event').hide();
   }
-});  
+});
 </script>
 {/literal}

@@ -5,14 +5,16 @@
   <description>Sign Up for additional events or memberships when signing up for one event</description>
   <license>agpl</license>
   <maintainer>
-    <author>Maggie Epps</author>
-    <email>maggie@aghstrategies.com</email>
+    <author>AGH Strategies</author>
+    <email>info@aghstrategies.com</email>
   </maintainer>
   <releaseDate>2014-07-11</releaseDate>
-  <version>1.0</version>
-  <develStage>alpha</develStage>
+  <version>1.1</version>
+  <develStage>stable</develStage>
   <compatibility>
     <ver>4.4</ver>
+    <ver>4.5</ver>
+    <ver>4.6</ver>
   </compatibility>
   <civix>
     <namespace>CRM/Eventmembershipsignup</namespace>
