@@ -1,16 +1,17 @@
-<h3 id="other-sign-up-header">Sign Up for Other Membership or Event</h3>
+{crmScope extensionKey='com.aghstrategies.eventmembershipsignup'}
 <table id="other-sign-up-table">
   <tbody id="other-sign-up">
+  <tr id="other-sign-up-header"><td colspan=2><h3>{ts}Sign Up for Other Membership or Event{/ts}</h3></td></tr>
   <tr class="crm-price-option-other-sign-up">
-      <td class="label"><label>Other Sign Up?</label></td>
+      <td class="label"><label>{ts}Additional Signup?{/ts}</label></td>
     <td id="othersignup-td">{$form.othersignup.html}</td>
   </tr>
   <tr class="crm-price-option-membershiptype">
-    <td class="label"><label>Membership Type</label></td>
+    <td class="label"><label>{ts}Membership Type{/ts}</label></td>
     <td>{$form.membershipselect.html}</td>
   </tr>
   <tr class="crm-price-option-event">
-    <td class="label"><label>Event</label></td>
+    <td class="label"><label>{ts}Event{/ts}</label></td>
     <td>{$form.eventselect.html}</td>
   </tr>
   </tbody>
@@ -33,8 +34,7 @@ cj(function($){
      $('#eventselect').val(eventmembershipvalue);
    }
   }
-  $('#other-sign-up').insertAfter('.crm-price-option-form-block-is_default');
-  $('#other-sign-up-header').insertAfter('.crm-price-option-form-block-is_default');
+  $('#other-sign-up>*').insertAfter('.crm-price-option-form-block-is_default');
   $('#othersignup').change(function(){
     if ($('#othersignup').val()=='Membership'){
      $('.crm-price-option-membershiptype').show();
@@ -65,3 +65,4 @@ cj(function($){
 });
 </script>
 {/literal}
+{/crmScope}

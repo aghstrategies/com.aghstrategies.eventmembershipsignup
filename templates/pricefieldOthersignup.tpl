@@ -1,7 +1,8 @@
+{crmScope extensionKey='com.aghstrategies.eventmembershipsignup'}
 {* template block that contains the new field *}
 <table id="other-sign-up">
 <tr class="othersignup-field-tr">
-  <th id="othersignup-header">Other Sign Up?</th>
+  <th id="othersignup-header">{ts}Additional Signup?{/ts}</th>
 
 {foreach from=$selectors item=i}
   <td>{$form.othersignup[$i].html}</td>
@@ -55,3 +56,4 @@ cj(function ($) {
 </script>
 {/foreach}
 </table>
+{/crmScope}
