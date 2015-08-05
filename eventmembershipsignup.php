@@ -1,4 +1,15 @@
 <?php
+/**
+ * @file
+ * Event Additional Signup.
+ *
+ * A CiviCRM extension to add price options for registration for other events or
+ * memberships to a CiviCRM event registration price set.
+ *
+ * Copyright (C) 2014-15, AGH Strategies, LLC <info@aghstrategies.com>
+ * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
+ */
+
 require_once 'eventmembershipsignup.civix.php';
 require_once 'otherSignupAdmin.php';
 

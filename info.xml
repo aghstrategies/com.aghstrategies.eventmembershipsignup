@@ -16,6 +16,9 @@
     <ver>4.5</ver>
     <ver>4.6</ver>
   </compatibility>
+  <urls>
+    <url desc=documentation>https://aghstrategies.com/content/event-additional-signup-extension</url>
+  </urls>
   <civix>
     <namespace>CRM/Eventmembershipsignup</namespace>
   </civix>
