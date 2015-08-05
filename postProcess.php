@@ -33,7 +33,7 @@ if ($formName == 'CRM_Price_Form_Field') {
           break;
       }
       if ($price_option_key <= $numOptions and !is_null($price_option_ids[$price_option_key]) and $price_option_othersignup) {
-        save_new_othersignup($price_option_ids[$price_option_key], $entity_table, $entity_ref_id);
+        eventmembershipsignup_save_new_othersignup($price_option_ids[$price_option_key], $entity_table, $entity_ref_id);
       }
     }
   }
@@ -55,7 +55,7 @@ elseif ($formName == 'CRM_Price_Form_Option') {
       break;
   }
   if ($form->_submitValues['othersignup']) {
-    save_new_othersignup($id, $entity_table, $entity_ref_id);
+    eventmembershipsignup_save_new_othersignup($id, $entity_table, $entity_ref_id);
   }
   else {
     $option_signup_id = 0;

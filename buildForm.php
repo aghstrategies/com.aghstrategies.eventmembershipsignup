@@ -2,8 +2,8 @@
 //edits forms for price option and price field so that other sign up can be selected
 $entityOptions = array(
   0 => 'No',
-  'Membership' => 'Membership',
-  'Participant' => 'Participant',
+  'Membership' => ts('Membership'),
+  'Participant' => ts('Participant'),
 );
 
 if ($formName == 'CRM_Price_Form_Field' && is_null($form->getVar('_fid'))) {
