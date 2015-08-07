@@ -41,6 +41,7 @@ function eventmembershipsignup_entity_options() {
  * Handle options created upon field creation.
  */
 function eventmembershipsignup_field_admin_form(&$form) {
+  $select2version = version_compare(CRM_Utils_System::version(), '4.5.0', '>=');
   $membershipSelector = array();
   $eventSelector = array();
   eventmembershipsignup_populate_selects($membershipSelector, $eventSelector);
@@ -52,7 +53,16 @@ function eventmembershipsignup_field_admin_form(&$form) {
     // Add the field element in the form.
     $form->add('select', "othersignup[$i]", ts('Additional Signup?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $entityOptions);
     $form->add('select', "membershipselect[$i]", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $membershipSelector);
-    $form->add('select', "eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $eventSelector);
+    if ($select2version) {
+      $form->addEntityRef("eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+        'entity' => 'event',
+        'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+        'select' => array('minimumInputLength' => 0),
+      ));
+    }
+    else {
+      $form->add('select', "eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $eventSelector);
+    }
     $selectors[] = $i;
   }
   $form->assign('numOptions', $numOptions);
@@ -116,17 +126,25 @@ function eventmembershipsignup_field_admin_postProcess(&$form) {
  * Handle single option form.
  */
 function eventmembershipsignup_option_admin_form(&$form) {
+  $select2version = version_compare(CRM_Utils_System::version(), '4.5.0', '>=');
+
   $id = $form->getVar('_oid');
   $form->assign('option_signup_id', 0);
   $form->assign('signupselectvalue', 0);
   $form->assign('eventmembershipvalue', 0);
+  $defaults = array();
   if (!is_null($id)) {
     $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = {$id};";
     $dao = CRM_Core_DAO::executeQuery($sql);
     if ($dao->fetch()) {
-      $form->assign('option_signup_id', $dao->id);
-      $form->assign('signupselectvalue', $dao->entity_table);
-      $form->assign('eventmembershipvalue', $dao->entity_ref_id);
+      if ($dao->entity_table == 'Event') {
+        $defaults['othersignup'] = 'Participant';
+        $defaults['eventselect'] = $dao->entity_ref_id;
+      }
+      elseif ($dao->entity_table == 'MembershipType') {
+        $defaults['othersignup'] = 'Membership';
+        $defaults['membershipselect'] = $dao->entity_ref_id;
+      }
     }
   }
 
@@ -136,9 +154,21 @@ function eventmembershipsignup_option_admin_form(&$form) {
   $entityOptions = eventmembershipsignup_entity_options();
 
   // Add the field element in the form.
-  $form->add('select', 'othersignup', ts('Other Sign Up?'), $entityOptions);
-  $form->add('select', 'membershipselect', ts('Select Membership Type'), $membershipSelector);
-  $form->add('select', 'eventselect', ts('Select Event'), $eventSelector);
+  $form->add('select', 'othersignup', ts('Other Sign Up?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $entityOptions);
+  $form->add('select', 'membershipselect', ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $membershipSelector);
+  if ($select2version) {
+    $form->addEntityRef('eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      'entity' => 'event',
+      'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+      'select' => array('minimumInputLength' => 0),
+    ));
+  }
+  else {
+    $form->add('select', 'eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $eventSelector);
+  }
+
+  $form->setDefaults($defaults);
+
   // Assumes templates are in a templates folder relative to this file.
   $templatePath = realpath(dirname(__FILE__) . "/templates");
   // Dynamically insert a template block in the page.
@@ -196,7 +226,7 @@ function eventmembershipsignup_populate_selects(&$membershipSelector, &$eventSel
     'is_active' => 1,
   ));
   foreach ($result['values'] as $event) {
-    $formattedDate = CRM_Utils_Date::format($event['start_date']);
+    $formattedDate = CRM_Utils_Date::customFormat($event['start_date']);
     $eventSelector[$event['id']] = "{$event['title']} ($formattedDate)";
   }
 }
