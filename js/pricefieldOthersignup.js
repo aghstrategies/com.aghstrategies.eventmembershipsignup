@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2014-15, AGH Strategies, LLC <info@aghstrategies.com>
+ * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
+ */
+
 cj(function ($) {
   function showHide(obj) {
     if ($(obj).val() == 'Membership') {
