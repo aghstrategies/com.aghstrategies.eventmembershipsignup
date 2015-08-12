@@ -45,7 +45,8 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
   // Save new registration or membership.
   if ($op == 'create' && $objectName == 'LineItem') {
     $price_field_value_id = 0;
-    $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objectRef['price_field_value_id']};";
+    $objPFV = is_array($objectRef) ? $objectRef['price_field_value_id'] : $objectRef->price_field_value_id;
+    $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objPFV};";
     $dao = CRM_Core_DAO::executeQuery($sql);
     if ($dao->fetch()) {
       $option_signup_id = $dao->id;
@@ -58,7 +59,8 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
     }
 
     try {
-      $participant = civicrm_api3('participant', 'getSingle', array('id' => $objectRef['entity_id']));
+      $objEntity = is_array($objectRef) ? $objectRef['entity_id'] : $objectRef->entity_id;
+      $participant = civicrm_api3('participant', 'getSingle', array('id' => $objEntity));
     }
     catch (CiviCRM_API3_Exception $e) {
       $error = $e->getMessage();
