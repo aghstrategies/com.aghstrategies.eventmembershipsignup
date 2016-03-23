@@ -89,6 +89,10 @@ function eventmembershipsignup_field_admin_postProcess(&$form) {
   while ($dao->fetch()) {
     $price_field_id = $dao->id;
   }
+  if (empty($price_field_id)) {
+    // TODO: log or notice
+    return;
+  }
   $sql = "SELECT id FROM civicrm_price_field_value WHERE price_field_id=$price_field_id ORDER BY id ASC;";
   $dao = CRM_Core_DAO::executeQuery($sql);
   $price_option_ids = array(0);
@@ -133,7 +137,7 @@ function eventmembershipsignup_option_admin_form(&$form) {
   $form->assign('signupselectvalue', 0);
   $form->assign('eventmembershipvalue', 0);
   $defaults = array();
-  if (!is_null($id)) {
+  if (!empty($id)) {
     $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = {$id};";
     $dao = CRM_Core_DAO::executeQuery($sql);
     if ($dao->fetch()) {
@@ -182,6 +186,10 @@ function eventmembershipsignup_option_admin_form(&$form) {
  */
 function eventmembershipsignup_option_admin_postProcess(&$form) {
   $id = $form->getVar('_oid');
+  if (empty($id)) {
+    // TODO: log or notice?
+    return;
+  }
   switch (CRM_Utils_Array::value('othersignup', $form->_submitValues)) {
     case 'Membership':
       eventmembershipsignup_save_new_othersignup($id, 'MembershipType', $form->_submitValues['membershipselect']);
