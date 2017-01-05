@@ -73,7 +73,7 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
           'contact_id',
           'participant_register_date',
           'participant_source',
-          'participant_status',
+          'participant_status_id',
           'participant_is_pay_later',
           'participant_registered_by_id',
           'participant_role_id',
@@ -87,6 +87,7 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
       }
       catch (CiviCRM_API3_Exception $e) {
         $error = $e->getMessage();
+        CRM_Core_Error::debug_var('Problem registering for add-on event', $newPartParams);
         CRM_Core_Session::setStatus($error, ts('Problem registering for add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
       }
     }
