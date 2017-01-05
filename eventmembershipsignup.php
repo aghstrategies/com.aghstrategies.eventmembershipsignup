@@ -129,6 +129,83 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
       }
     }
   }
+  // elseif ($op == 'edit' && $objectName == 'Contribution') {
+  //   if ($objectRef->contribution_status_id == array_search('Cancelled', $contributionStatuses)) {}
+  //   CRM_Core_Error::debug_var('participant edited', $objectRef);
+  // }
+}
+
+/**
+ * Implements hook_civicrm_pre().
+ */
+function eventmembershipsignup_civicrm_pre($op, $objectName, $id, &$params) {
+  if ($op == 'edit' && $objectName == 'Participant') {
+    if (empty($params['status_id'])) {
+      CRM_Core_Error::debug_var('missing status_id', $params);
+      return;
+    }
+    $participantStatuses = CRM_Event_PseudoConstant::participantStatus();
+    $sql = <<<HERESQL
+SELECT p.status_id, os.entity_table, os.entity_ref_id
+FROM civicrm_participant p
+JOIN civicrm_participant_payment pp
+  on pp.participant_id = p.id
+JOIN civicrm_contribution c
+  ON c.id = pp.contribution_id
+JOIN civicrm_line_item li
+  ON li.contribution_id = c.id
+JOIN civicrm_option_signup os
+  ON os.price_option_id = li.price_field_value_id
+WHERE p.id = $id
+HERESQL;
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    while ($dao->fetch()) {
+      if ($dao->entity_table == 'Event' && $dao->entity_ref_id == $id) {
+        $dao->toArray();
+        CRM_Core_Error::debug_var('resetting same participant id', $dao);
+        continue;
+      }
+      if (!in_array(
+        $participantStatuses[$params['status_id']],
+        CRM_Utils_Array::value(
+          $participantStatuses[$dao->status_id],
+          CRM_Event_BAO_Participant::$_statusTransitionsRules,
+          array()
+        )
+      )) {
+        // We're not going from a pending status to a completed status, so no
+        // need to update the other events
+        $dao->toArray();
+        CRM_Core_Error::debug_var('wrong status transition', $dao);
+        return;
+      }
+
+      switch ($dao->entity_table) {
+        case 'Event':
+          try {
+            $updateParams = array(
+              'id' => $dao->entity_ref_id,
+              'status_id' => $params['status_id'],
+            );
+            $result = civicrm_api3('Participant', 'create', $updateParams);
+          }
+          catch (CiviCRM_API3_Exception $e) {
+            $error = $e->getMessage();
+            CRM_Core_Error::debug_var('Problem updating pay-later add-on event', $updateParams);
+            CRM_Core_Session::setStatus($error, ts('Problem updating pay-later add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+          }
+          break;
+
+        case 'MembershipType':
+          // resolve pay-later membership
+          break;
+      }
+    }
+  }
+  else {
+    $vars = array($op, $objectName, $id, $params);
+    // CRM_Core_Error::debug_var('not picked up by pre hook', $vars);
+  }
 }
 
 /**
@@ -149,7 +226,18 @@ function eventmembershipsignup_civicrm_xmlMenu(&$files) {
  * Implements hook_civicrm_install().
  */
 function eventmembershipsignup_civicrm_install() {
-  $sql = "CREATE TABLE civicrm_option_signup (id INT NOT NULL AUTO_INCREMENT, price_option_id INT,  entity_table VARCHAR (255), entity_ref_id INT, PRIMARY KEY (id));";
+  $sql = <<<HERESQL
+CREATE TABLE `civicrm_option_signup` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `price_option_id` int(10) unsigned,
+  `entity_table` varchar(64),
+  `entity_ref_id` int(10) unsigned,
+  PRIMARY KEY (`id`),
+  KEY `price_option_id` (`price_option_id`),
+  KEY `entity_table_entity_ref_id` (`entity_table`,`entity_ref_id`),
+  CONSTRAINT `FK_civicrm_option_signup_price_option_id` FOREIGN KEY (`price_option_id`) REFERENCES `civicrm_price_field_value` (`id`) ON DELETE CASCADE
+)
+HERESQL;
   CRM_Core_DAO::executeQuery($sql);
   return _eventmembershipsignup_civix_civicrm_install();
 }
