@@ -1,4 +1,4 @@
-{* Copyright (C) 2014-15, AGH Strategies, LLC <info@aghstrategies.com> *}
+{* Copyright (C) 2014-17, AGH Strategies, LLC <info@aghstrategies.com> *}
 {* Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt) *}
 
 {crmScope extensionKey='com.aghstrategies.eventmembershipsignup'}

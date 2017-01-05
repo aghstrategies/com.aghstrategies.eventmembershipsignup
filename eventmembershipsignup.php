@@ -6,7 +6,7 @@
  * A CiviCRM extension to add price options for registration for other events or
  * memberships to a CiviCRM event registration price set.
  *
- * Copyright (C) 2014-15, AGH Strategies, LLC <info@aghstrategies.com>
+ * Copyright (C) 2014-17, AGH Strategies, LLC <info@aghstrategies.com>
  * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
  */
 
@@ -14,7 +14,7 @@ require_once 'eventmembershipsignup.civix.php';
 require_once 'otherSignupAdmin.php';
 
 /**
- * Implementation of hook_civicrm_buildForm
+ * Implements hook_civicrm_buildForm().
  */
 function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
   if ($formName == 'CRM_Price_Form_Field' && is_null($form->getVar('_fid'))) {
@@ -26,7 +26,7 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
 }
 
 /**
- * Implementation of hook_civicrm_postProcess
+ * Implements hook_civicrm_postProcess().
  */
 function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Price_Form_Field') {
@@ -39,7 +39,7 @@ function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
 
 
 /**
- * Implementation of hook_civicrm_post
+ * Implements hook_civicrm_post().
  */
 function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   // Save new registration or membership.
@@ -132,23 +132,21 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
 }
 
 /**
- * Implementation of hook_civicrm_config
+ * Implements hook_civicrm_config().
  */
 function eventmembershipsignup_civicrm_config(&$config) {
   _eventmembershipsignup_civix_civicrm_config($config);
 }
 
 /**
- * Implementation of hook_civicrm_xmlMenu
- *
- * @param $files array(string)
+ * Implements hook_civicrm_xmlMenu().
  */
 function eventmembershipsignup_civicrm_xmlMenu(&$files) {
   _eventmembershipsignup_civix_civicrm_xmlMenu($files);
 }
 
 /**
- * Implementation of hook_civicrm_install
+ * Implements hook_civicrm_install().
  */
 function eventmembershipsignup_civicrm_install() {
   $sql = "CREATE TABLE civicrm_option_signup (id INT NOT NULL AUTO_INCREMENT, price_option_id INT,  entity_table VARCHAR (255), entity_ref_id INT, PRIMARY KEY (id));";
@@ -157,7 +155,7 @@ function eventmembershipsignup_civicrm_install() {
 }
 
 /**
- * Implementation of hook_civicrm_uninstall
+ * Implements hook_civicrm_uninstall().
  */
 function eventmembershipsignup_civicrm_uninstall() {
   $sql = "DROP TABLE civicrm_option_signup;";
@@ -166,34 +164,28 @@ function eventmembershipsignup_civicrm_uninstall() {
 }
 
 /**
- * Implementation of hook_civicrm_enable
+ * Implements hook_civicrm_enable().
  */
 function eventmembershipsignup_civicrm_enable() {
   return _eventmembershipsignup_civix_civicrm_enable();
 }
 
 /**
- * Implementation of hook_civicrm_disable
+ * Implements hook_civicrm_disable().
  */
 function eventmembershipsignup_civicrm_disable() {
   return _eventmembershipsignup_civix_civicrm_disable();
 }
 
 /**
- * Implementation of hook_civicrm_upgrade
- *
- * @param $op string, the type of operation being performed; 'check' or 'enqueue'
- * @param $queue CRM_Queue_Queue, (for 'enqueue') the modifiable list of pending up upgrade tasks
- *
- * @return mixed  based on op. for 'check', returns array(boolean) (TRUE if upgrades are pending)
- *                for 'enqueue', returns void
+ * Implements hook_civicrm_upgrade().
  */
 function eventmembershipsignup_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
   return _eventmembershipsignup_civix_civicrm_upgrade($op, $queue);
 }
 
 /**
- * Implementation of hook_civicrm_managed
+ * Implements hook_civicrm_managed().
  *
  * Generate a list of entities to create/deactivate/delete when this module
  * is installed, disabled, uninstalled.
