@@ -139,72 +139,60 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
  * Implements hook_civicrm_pre().
  */
 function eventmembershipsignup_civicrm_pre($op, $objectName, $id, &$params) {
-  if ($op == 'edit' && $objectName == 'Participant') {
-    if (empty($params['status_id'])) {
-      CRM_Core_Error::debug_var('missing status_id', $params);
+  if ($op == 'edit' && $objectName == 'Contribution') {
+    if (empty($params['prevContribution']->is_pay_later)
+      || CRM_Utils_Array::value('is_pay_later', $params, 1)
+      || empty($params['participant_id'])) {
       return;
     }
-    $participantStatuses = CRM_Event_PseudoConstant::participantStatus();
+
+    $contribStatusAPI = civicrm_api3('Contribution', 'getoptions', array(
+      'field' => "contribution_status_id",
+      'context' => "validate",
+    ));
+
+    $participantStatusAPI = civicrm_api3('Participant', 'getoptions', array(
+      'field' => "participant_status_id",
+      'context' => "validate",
+    ));
+
     $sql = <<<HERESQL
-SELECT p.status_id, os.entity_table, os.entity_ref_id
-FROM civicrm_participant p
-JOIN civicrm_participant_payment pp
-  on pp.participant_id = p.id
-JOIN civicrm_contribution c
-  ON c.id = pp.contribution_id
+SELECT p.id as participant_id, p.status_id as participant_status_id
+FROM civicrm_contribution c
 JOIN civicrm_line_item li
   ON li.contribution_id = c.id
 JOIN civicrm_option_signup os
   ON os.price_option_id = li.price_field_value_id
-WHERE p.id = $id
+LEFT JOIN civicrm_participant p
+  ON p.event_id = os.entity_ref_id
+  AND p.contact_id = c.contact_id
+WHERE c.id = $id
+  AND os.entity_table = 'Event'
 HERESQL;
     $dao = CRM_Core_DAO::executeQuery($sql);
-    while ($dao->fetch()) {
-      if ($dao->entity_table == 'Event' && $dao->entity_ref_id == $id) {
-        $dao->toArray();
-        CRM_Core_Error::debug_var('resetting same participant id', $dao);
-        continue;
-      }
-      if (!in_array(
-        $participantStatuses[$params['status_id']],
-        CRM_Utils_Array::value(
-          $participantStatuses[$dao->status_id],
-          CRM_Event_BAO_Participant::$_statusTransitionsRules,
-          array()
-        )
-      )) {
-        // We're not going from a pending status to a completed status, so no
-        // need to update the other events
-        $dao->toArray();
-        CRM_Core_Error::debug_var('wrong status transition', $dao);
-        return;
-      }
 
-      switch ($dao->entity_table) {
-        case 'Event':
-          try {
-            $updateParams = array(
-              'id' => $dao->entity_ref_id,
-              'status_id' => $params['status_id'],
-            );
-            $result = civicrm_api3('Participant', 'create', $updateParams);
-          }
-          catch (CiviCRM_API3_Exception $e) {
-            $error = $e->getMessage();
-            CRM_Core_Error::debug_var('Problem updating pay-later add-on event', $updateParams);
-            CRM_Core_Session::setStatus($error, ts('Problem updating pay-later add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
-          }
-          break;
+    // FIXME: for now, no updating of memberships, just events.  The reason?
+    // This:
+    // https://github.com/civicrm/civicrm-core/blob/4.7.15/CRM/Contribute/BAO/Contribution.php#L1810
+    // and the following 110 lines.  For now, add-on memberships are not held in
+    // pending status so there is no need to activate them when pay-later is
+    // resolved.
+    switch (CRM_Utils_Array::value($params['contribution_status_id'], $contribStatusAPI['values'])) {
+      case 'Cancelled':
+      case 'Failed':
+        $updatedStatusId = array_search('Cancelled', $participantStatusAPI['values']);
+        while ($dao->fetch()) {
+          CRM_Event_BAO_Participant::updateParticipantStatus($dao->participant_id, $dao->participant_status_id, $updatedStatusId, TRUE);
+        }
+        break;
 
-        case 'MembershipType':
-          // resolve pay-later membership
-          break;
-      }
+      case 'Completed':
+        $updatedStatusId = array_search('Registered', $participantStatusAPI['values']);
+        while ($dao->fetch()) {
+          CRM_Event_BAO_Participant::updateParticipantStatus($dao->participant_id, $dao->participant_status_id, $updatedStatusId, TRUE);
+        }
+        break;
     }
-  }
-  else {
-    $vars = array($op, $objectName, $id, $params);
-    // CRM_Core_Error::debug_var('not picked up by pre hook', $vars);
   }
 }
 
