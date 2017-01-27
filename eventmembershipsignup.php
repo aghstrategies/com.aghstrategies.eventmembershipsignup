@@ -17,11 +17,23 @@ require_once 'otherSignupAdmin.php';
  * Implements hook_civicrm_buildForm().
  */
 function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
-  if ($formName == 'CRM_Price_Form_Field' && is_null($form->getVar('_fid'))) {
-    eventmembershipsignup_field_admin_form($form);
-  }
-  elseif ($formName == 'CRM_Price_Form_Option') {
-    eventmembershipsignup_option_admin_form($form);
+  switch ($formName) {
+    case 'CRM_Price_Form_Field':
+      if (empty($form->getVar('_fid'))) {
+        eventmembershipsignup_field_admin_form($form);
+      }
+      break;
+
+    case 'CRM_Price_Form_Option':
+      eventmembershipsignup_option_admin_form($form);
+      break;
+
+    case 'CRM_Event_Form_Registration_Register':
+      // Note: this does NOT check if online registration is enabled for the
+      // event.  Presumably if you add an event as an add-on, you want people to
+      // be able to register for it unless it's too late.
+      CRM_Eventadditional_Frontend::checkRegOpen($form);
+      break;
   }
 }
 
