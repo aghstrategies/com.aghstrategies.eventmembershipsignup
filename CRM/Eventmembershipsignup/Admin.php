@@ -7,7 +7,7 @@
  * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
  */
 
-class CRM_Eventadditional_Admin {
+class CRM_Eventmembershipsignup_Admin {
 
   public $entityOptions = array();
 
