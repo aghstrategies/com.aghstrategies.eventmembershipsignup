@@ -11,7 +11,6 @@
  */
 
 require_once 'eventmembershipsignup.civix.php';
-require_once 'otherSignupAdmin.php';
 
 /**
  * Implements hook_civicrm_buildForm().
@@ -20,12 +19,14 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
   switch ($formName) {
     case 'CRM_Price_Form_Field':
       if (empty($form->getVar('_fid'))) {
-        eventmembershipsignup_field_admin_form($form);
+        $admin = new CRM_Eventadditional_Admin();
+        $admin->modFieldAdminForm($form);
       }
       break;
 
     case 'CRM_Price_Form_Option':
-      eventmembershipsignup_option_admin_form($form);
+      $admin = new CRM_Eventadditional_Admin();
+      $admin->modOptionAdminForm($form);
       break;
 
     case 'CRM_Event_Form_Registration_Register':
@@ -42,10 +43,12 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
  */
 function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Price_Form_Field') {
-    eventmembershipsignup_field_admin_postProcess($form);
+    $admin = new CRM_Eventadditional_Admin();
+    $admin->processFieldAdminForm($form);
   }
   elseif ($formName == 'CRM_Price_Form_Option') {
-    eventmembershipsignup_option_admin_postProcess($form);
+    $admin = new CRM_Eventadditional_Admin();
+    $admin->processOptionAdminForm($form);
   }
 }
 
