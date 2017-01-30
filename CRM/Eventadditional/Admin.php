@@ -121,47 +121,55 @@ HERESQL;
    *   The price field form to process.
    */
   public function processFieldAdminForm(&$form) {
-    // Assume that the only time options are added in bulk is if the field is
-    // newly-created.
-    $sql = "SELECT id FROM civicrm_price_field ORDER BY id DESC LIMIT 1;";
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    while ($dao->fetch()) {
-      $price_field_id = $dao->id;
-    }
-    if (empty($price_field_id)) {
-      // TODO: log or notice
+    // Don't process if there are no values in the "othersignup" set of fields.
+    if (empty($form->_submitValues['othersignup'])) {
       return;
     }
-    $sql = "SELECT id FROM civicrm_price_field_value WHERE price_field_id=$price_field_id ORDER BY id ASC;";
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    $price_option_ids = array(0);
-    while ($dao->fetch()) {
-      $price_option_ids[] = $dao->id;
-    }
-    $numOptions = count($price_option_ids);
-    $othersignups = $form->_submitValues['othersignup'];
-    $membershipselects = $form->_submitValues['membershipselect'];
-    $eventselects = $form->_submitValues['eventselect'];
+
+    // The arrays of values for the multiple options that were created.
+    $optionMultiFields = array(
+      'option_label',
+      'option_amount',
+      'option_financial_type_id',
+      'option_count',
+      'option_max_value',
+      'option_weight',
+    );
+
+    // Walk through options and only deal with additional signup options.
     foreach ($form->_submitValues['othersignup'] as $price_option_key => $price_option_othersignup) {
-      if ($price_option_othersignup) {
-        switch ($price_option_othersignup) {
-          case 'Membership':
-            $entity_ref_id = $membershipselects[$price_option_key];
-            $entity_table = 'MembershipType';
-            break;
+      switch ($price_option_othersignup) {
+        case 'Membership':
+          $entityRefId = $form->_submitValues['membershipselect'][$price_option_key];
+          $entityTable = 'MembershipType';
+          break;
 
-          case 'Participant':
-            $entity_ref_id = $eventselects[$price_option_key];
-            $entity_table = 'Event';
-            break;
+        case 'Participant':
+          $entityRefId = $form->_submitValues['eventselect'][$price_option_key];
+          $entityTable = 'Event';
+          break;
 
-          default:
-            continue 2;
-        }
-        if ($price_option_key <= $numOptions and !is_null($price_option_ids[$price_option_key]) and $price_option_othersignup) {
-          self::newOthersignup($price_option_ids[$price_option_key], $entity_table, $entity_ref_id);
+        default:
+          continue 2;
+      }
+
+      // Assemble information from the option fields.
+      $vals = array();
+      foreach ($optionMultiFields as $f) {
+        if (!empty($form->_submitValues[$f][$price_option_key])) {
+          $fShort = substr($f, 7);
+          $vals[$fShort] = $form->_submitValues[$f][$price_option_key];
         }
       }
+      if (empty($vals)) {
+        continue;
+      }
+      else {
+        $vals['fieldId'] = self::findOptionByValues($form->_submitValues, 'PriceField');
+      }
+      $priceOptionId = self::findOptionByValues($vals);
+
+      self::newOthersignup($priceOptionId, $entityTable, $entityRefId);
     }
   }
 
@@ -230,11 +238,11 @@ HERESQL;
     }
     switch (CRM_Utils_Array::value('othersignup', $form->_submitValues)) {
       case 'Membership':
-        CRM_Eventadditional_Admin::newOthersignup($id, 'MembershipType', $form->_submitValues['membershipselect']);
+        self::newOthersignup($id, 'MembershipType', $form->_submitValues['membershipselect']);
         break;
 
       case 'Participant':
-        CRM_Eventadditional_Admin::newOthersignup($id, 'Event', $form->_submitValues['eventselect']);
+        self::newOthersignup($id, 'Event', $form->_submitValues['eventselect']);
         break;
 
       default:
@@ -254,23 +262,42 @@ HERESQL;
   }
 
   /**
-   * Look up a price option by its values.
+   * Look up a price option or field by its values.
    *
-   * hook_civicrm_postProcess gets called after a price option is created, but
-   * nowhere in the form is the price_field_value_id recorded.
+   * hook_civicrm_postProcess gets called after a price option/field is created,
+   * but nowhere in the form is the price_field_value_id recorded.
    *
    * @param array $values
    *   Submit values to search by.
+   * @param string $fieldOrOption
+   *   Whether to retrieve a PriceFieldValue or a PriceField.
    * @return int
    *   The ID of the found option.
    */
-  public static function findOptionByValues($values) {
-    $fields = array(
-      'fieldId' => 'price_field_id',
-      'label' => 'label',
-      'amount' => 'amount',
-      'financial_type_id' => 'financial_type_id',
-    );
+  public static function findOptionByValues($values, $fieldOrOption = 'PriceFieldValue') {
+    switch ($fieldOrOption) {
+      case 'PriceField':
+        $fields = array(
+          'sid' => 'price_set_id',
+          'label' => 'label',
+          'html_type' => 'html_type',
+          'is_display_amounts' => 'is_display_amounts',
+        );
+        break;
+
+      case 'PriceFieldValue':
+      default:
+        $fields = array(
+          'fieldId' => 'price_field_id',
+          'label' => 'label',
+          'amount' => 'amount',
+          'financial_type_id' => 'financial_type_id',
+          'count' => 'count',
+          'max_value' => 'max_value',
+          'weight' => 'weight',
+        );
+        break;
+    }
 
     $searchParams = array(
       'return' => 'id',
@@ -282,16 +309,16 @@ HERESQL;
     );
 
     foreach ($fields as $val => $field) {
-      if (array_key_exists($val, $values)) {
+      if (!empty($values[$val])) {
         $searchParams[$field] = $values[$val];
       }
     }
 
     try {
-      return civicrm_api3('PriceFieldValue', 'getvalue', $searchParams);
+      return civicrm_api3($fieldOrOption, 'getvalue', $searchParams);
     }
     catch (CiviCRM_API3_Exception $e) {
-      CRM_Core_Error::debug_var('Failed to find price option just created', $e);
+      CRM_Core_Error::debug_var('Failed to find price option/field just created', $e);
     }
   }
 
