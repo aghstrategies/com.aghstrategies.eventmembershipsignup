@@ -73,7 +73,7 @@ HERESQL;
         ));
       }
       catch (CiviCRM_API3_Exception $e) {
-        // TODO: log the error
+        CRM_Core_Error::debug_var('Cannot find event', $e);
         return;
       }
 
