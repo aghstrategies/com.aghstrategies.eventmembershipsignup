@@ -19,13 +19,13 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
   switch ($formName) {
     case 'CRM_Price_Form_Field':
       if (empty($form->getVar('_fid'))) {
-        $admin = new CRM_Eventadditional_Admin();
+        $admin = new CRM_Eventmembershipsignup_Admin();
         $admin->modFieldAdminForm($form);
       }
       break;
 
     case 'CRM_Price_Form_Option':
-      $admin = new CRM_Eventadditional_Admin();
+      $admin = new CRM_Eventmembershipsignup_Admin();
       $admin->modOptionAdminForm($form);
       break;
 
@@ -33,7 +33,7 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
       // Note: this does NOT check if online registration is enabled for the
       // event.  Presumably if you add an event as an add-on, you want people to
       // be able to register for it unless it's too late.
-      CRM_Eventadditional_Frontend::checkRegOpen($form);
+      CRM_Eventmembershipsignup_Frontend::checkRegOpen($form);
       break;
   }
 }
@@ -43,10 +43,10 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
  */
 function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Price_Form_Field') {
-    CRM_Eventadditional_Admin::processFieldAdminForm($form);
+    CRM_Eventmembershipsignup_Admin::processFieldAdminForm($form);
   }
   elseif ($formName == 'CRM_Price_Form_Option') {
-    CRM_Eventadditional_Admin::processOptionAdminForm($form);
+    CRM_Eventmembershipsignup_Admin::processOptionAdminForm($form);
   }
 }
 
@@ -227,19 +227,6 @@ function eventmembershipsignup_civicrm_xmlMenu(&$files) {
  * Implements hook_civicrm_install().
  */
 function eventmembershipsignup_civicrm_install() {
-  $sql = <<<HERESQL
-CREATE TABLE `civicrm_option_signup` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `price_option_id` int(10) unsigned,
-  `entity_table` varchar(64),
-  `entity_ref_id` int(10) unsigned,
-  PRIMARY KEY (`id`),
-  KEY `price_option_id` (`price_option_id`),
-  KEY `entity_table_entity_ref_id` (`entity_table`,`entity_ref_id`),
-  CONSTRAINT `FK_civicrm_option_signup_price_option_id` FOREIGN KEY (`price_option_id`) REFERENCES `civicrm_price_field_value` (`id`) ON DELETE CASCADE
-)
-HERESQL;
-  CRM_Core_DAO::executeQuery($sql);
   return _eventmembershipsignup_civix_civicrm_install();
 }
 
@@ -247,8 +234,6 @@ HERESQL;
  * Implements hook_civicrm_uninstall().
  */
 function eventmembershipsignup_civicrm_uninstall() {
-  $sql = "DROP TABLE civicrm_option_signup;";
-  CRM_Core_DAO::executeQuery($sql);
   return _eventmembershipsignup_civix_civicrm_uninstall();
 }
 

@@ -7,7 +7,7 @@
  * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
  */
 
-class CRM_Eventadditional_Frontend {
+class CRM_Eventmembershipsignup_Frontend {
 
   /**
    * Walk through price options and see if events are still eligible for signup.
