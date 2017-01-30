@@ -14,9 +14,22 @@ class CRM_Eventadditional_Admin {
   public function __construct() {
     $this->entityOptions = array(
       0 => ts('No', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
-      'Membership' => ts('Membership', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
-      'Participant' => ts('Participant', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
     );
+    try {
+      $components = civicrm_api3('Setting', 'getvalue', array(
+        'group' => "CiviCRM Preferences",
+        'name' => "enable_components",
+      ));
+      if (in_array('CiviMember', $components)) {
+        $this->entityOptions['Membership'] = ts('Membership', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
+      }
+      if (in_array('CiviEvent', $components)) {
+        $this->entityOptions['Participant'] = ts('Participant', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
+      }
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      CRM_Core_Error::debug_var('Cannot find enabled components', $e);
+    }
   }
 
   /**
@@ -94,7 +107,7 @@ HERESQL;
    * @param CRM_Price_Form_Field $form
    *   The price field form to process.
    */
-  public function processFieldAdminForm(&$form) {
+  public static function processFieldAdminForm(&$form) {
     // Don't process if there are no values in the "othersignup" set of fields.
     if (empty($form->_submitValues['othersignup'])) {
       return;
@@ -202,7 +215,7 @@ HERESQL;
    * @param CRM_Price_Form_Option $form
    *   The option admin form being processed.
    */
-  public function processOptionAdminForm(&$form) {
+  public static function processOptionAdminForm(&$form) {
     $id = $form->getVar('_oid');
     if (empty($id)) {
       $id = self::findOptionByValues($form->_submitValues);

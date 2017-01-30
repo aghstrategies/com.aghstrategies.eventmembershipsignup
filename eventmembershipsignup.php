@@ -43,12 +43,10 @@ function eventmembershipsignup_civicrm_buildForm($formName, &$form) {
  */
 function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Price_Form_Field') {
-    $admin = new CRM_Eventadditional_Admin();
-    $admin->processFieldAdminForm($form);
+    CRM_Eventadditional_Admin::processFieldAdminForm($form);
   }
   elseif ($formName == 'CRM_Price_Form_Option') {
-    $admin = new CRM_Eventadditional_Admin();
-    $admin->processOptionAdminForm($form);
+    CRM_Eventadditional_Admin::processOptionAdminForm($form);
   }
 }
 
