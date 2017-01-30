@@ -11,35 +11,12 @@ class CRM_Eventadditional_Admin {
 
   public $entityOptions = array();
 
-  public $membershipSelector = array();
-
-  public $eventSelector = array();
-
   public function __construct() {
     $this->entityOptions = array(
       0 => ts('No', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
       'Membership' => ts('Membership', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
       'Participant' => ts('Participant', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
     );
-
-    $result = civicrm_api3('MembershipType', 'get', array(
-      'sequential' => 1,
-      'is_active' => 1,
-      'options' => array('sort' => 'weight ASC'),
-    ));
-    foreach ($result['values'] as $membershipType) {
-      $this->membershipSelector[$membershipType['id']] = $membershipType['name'] . ': ' . $membershipType['minimum_fee'];
-    }
-    $result = civicrm_api3('Event', 'get', array(
-      'sequential' => 1,
-      'options' => array('sort' => "start_date DESC"),
-      'return' => "title,start_date",
-      'is_active' => 1,
-    ));
-    foreach ($result['values'] as $event) {
-      $formattedDate = CRM_Utils_Date::customFormat($event['start_date']);
-      $this->eventSelector[$event['id']] = "{$event['title']} ($formattedDate)";
-    }
   }
 
   /**
@@ -82,24 +59,21 @@ HERESQL;
    *   The form for adding a new price field.
    */
   public function modFieldAdminForm(&$form) {
-    $select2version = version_compare(CRM_Utils_System::version(), '4.5.0', '>=');
-
     $numOptions = $form::NUM_OPTION;
     $selectors = array();
     for ($i = 1; $i <= $numOptions; $i++) {
       // Add the field element in the form.
       $form->add('select', "othersignup[$i]", ts('Additional Signup?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
-      $form->add('select', "membershipselect[$i]", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->membershipSelector);
-      if ($select2version) {
-        $form->addEntityRef("eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
-          'entity' => 'event',
-          'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
-          'select' => array('minimumInputLength' => 0),
-        ));
-      }
-      else {
-        $form->add('select', "eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->eventSelector);
-      }
+      $form->addEntityRef("membershipselect[$i]", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+        'entity' => 'membershipType',
+        'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+        'select' => array('minimumInputLength' => 0),
+      ));
+      $form->addEntityRef("eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+        'entity' => 'event',
+        'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+        'select' => array('minimumInputLength' => 0),
+      ));
       $selectors[] = $i;
     }
     $form->assign('numOptions', $numOptions);
@@ -180,8 +154,6 @@ HERESQL;
    *   The form to modify.
    */
   public function modOptionAdminForm(&$form) {
-    $select2version = version_compare(CRM_Utils_System::version(), '4.5.0', '>=');
-
     $id = $form->getVar('_oid');
     $form->assign('option_signup_id', 0);
     $form->assign('signupselectvalue', 0);
@@ -204,17 +176,16 @@ HERESQL;
 
     // Add the field element in the form.
     $form->add('select', 'othersignup', ts('Other Sign Up?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
-    $form->add('select', 'membershipselect', ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->membershipSelector);
-    if ($select2version) {
-      $form->addEntityRef('eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
-        'entity' => 'event',
-        'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
-        'select' => array('minimumInputLength' => 0),
-      ));
-    }
-    else {
-      $form->add('select', 'eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->eventSelector);
-    }
+    $form->addEntityRef("membershipselect", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      'entity' => 'membershipType',
+      'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+      'select' => array('minimumInputLength' => 0),
+    ));
+    $form->addEntityRef('eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      'entity' => 'event',
+      'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+      'select' => array('minimumInputLength' => 0),
+    ));
 
     $form->setDefaults($defaults);
 
