@@ -227,19 +227,6 @@ function eventmembershipsignup_civicrm_xmlMenu(&$files) {
  * Implements hook_civicrm_install().
  */
 function eventmembershipsignup_civicrm_install() {
-  $sql = <<<HERESQL
-CREATE TABLE `civicrm_option_signup` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `price_option_id` int(10) unsigned,
-  `entity_table` varchar(64),
-  `entity_ref_id` int(10) unsigned,
-  PRIMARY KEY (`id`),
-  KEY `price_option_id` (`price_option_id`),
-  KEY `entity_table_entity_ref_id` (`entity_table`,`entity_ref_id`),
-  CONSTRAINT `FK_civicrm_option_signup_price_option_id` FOREIGN KEY (`price_option_id`) REFERENCES `civicrm_price_field_value` (`id`) ON DELETE CASCADE
-)
-HERESQL;
-  CRM_Core_DAO::executeQuery($sql);
   return _eventmembershipsignup_civix_civicrm_install();
 }
 
@@ -247,8 +234,6 @@ HERESQL;
  * Implements hook_civicrm_uninstall().
  */
 function eventmembershipsignup_civicrm_uninstall() {
-  $sql = "DROP TABLE civicrm_option_signup;";
-  CRM_Core_DAO::executeQuery($sql);
   return _eventmembershipsignup_civix_civicrm_uninstall();
 }
 
