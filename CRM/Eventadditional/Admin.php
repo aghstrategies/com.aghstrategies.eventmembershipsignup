@@ -226,8 +226,7 @@ HERESQL;
   public function processOptionAdminForm(&$form) {
     $id = $form->getVar('_oid');
     if (empty($id)) {
-      // TODO: log or notice?
-      return;
+      $id = self::findOptionByValues($form->_submitValues);
     }
     switch (CRM_Utils_Array::value('othersignup', $form->_submitValues)) {
       case 'Membership':
@@ -251,6 +250,48 @@ HERESQL;
           CRM_Core_DAO::executeQuery($sql);
         }
         break;
+    }
+  }
+
+  /**
+   * Look up a price option by its values.
+   *
+   * hook_civicrm_postProcess gets called after a price option is created, but
+   * nowhere in the form is the price_field_value_id recorded.
+   *
+   * @param array $values
+   *   Submit values to search by.
+   * @return int
+   *   The ID of the found option.
+   */
+  public static function findOptionByValues($values) {
+    $fields = array(
+      'fieldId' => 'price_field_id',
+      'label' => 'label',
+      'amount' => 'amount',
+      'financial_type_id' => 'financial_type_id',
+    );
+
+    $searchParams = array(
+      'return' => 'id',
+      'options' => array(
+        // In case there are two identical values, pull the newest
+        'sort' => "id DESC",
+        'limit' => 1,
+      ),
+    );
+
+    foreach ($fields as $val => $field) {
+      if (array_key_exists($val, $values)) {
+        $searchParams[$field] = $values[$val];
+      }
+    }
+
+    try {
+      return civicrm_api3('PriceFieldValue', 'getvalue', $searchParams);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      CRM_Core_Error::debug_var('Failed to find price option just created', $e);
     }
   }
 
