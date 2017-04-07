@@ -1,6 +1,6 @@
 # CiviCRM Event Additional Signup
 
-Generate memberships or other event registrations from price options on an event
+Generate memberships or other event registrations from price options in a price set on an event
 
 ## Installation and Configuration
 
@@ -11,6 +11,9 @@ Follow the standard CiviCRM extension installation procedure.
 1. When creating or editing a price option (a radio or checkbox option for a price ﬁeld), you may select “Other sign up” as Participant or Membership.
 2. Select the membership type or event that the membership or participant record should be created for.
 3. People who select the option while registering for an event that uses your price set will then be registered for the other event or have a membership added.
+
+
+![eas-field-options-setup](https://)
 
 ## Caveats
 
