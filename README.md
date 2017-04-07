@@ -12,8 +12,7 @@ Follow the standard CiviCRM extension installation procedure.
 2. Select the membership type or event that the membership or participant record should be created for.
 3. People who select the option while registering for an event that uses your price set will then be registered for the other event or have a membership added.
 
-
-![eas-field-options-setup](https://)
+![Field Options Setup](https://github.com/danaskallman/com.aghstrategies.eventmembershipsignup/blob/docs/docs/screenshots/eas-field-options-setup.jpg)
 
 ## Caveats
 
