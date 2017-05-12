@@ -52,12 +52,11 @@ class CRM_Eventmembershipsignup_Frontend {
     $sql = <<<HERESQL
 SELECT entity_ref_id
 FROM civicrm_option_signup
-WHERE price_option_id = $option
+WHERE price_option_id = %1
   AND entity_table = 'Event'
 HERESQL;
 
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    if ($dao->fetch()) {
+    if ($eventId = CRM_Core_DAO::singleValueQuery($sql, array(1 => array($option, 'Integer')))) {
       try {
         $event = civicrm_api3('Event', 'getsingle', array(
           'sequential' => 1,
@@ -69,7 +68,7 @@ HERESQL;
             'registration_end_date',
             'end_date',
           ),
-          'id' => $dao->entity_ref_id,
+          'id' => $eventId,
         ));
       }
       catch (CiviCRM_API3_Exception $e) {
@@ -96,13 +95,13 @@ HERESQL;
 
       // Event is full
       if (!empty($event['max_participants'])) {
-        $full = CRM_Event_BAO_Participant::eventFull($dao->entity_ref_id);
+        $full = CRM_Event_BAO_Participant::eventFull($eventId);
         if (!empty($full)) {
           $waitlistText = ts(
             '%1 You may visit <a href="%2" target="_blank">this form</a> to join the waiting list.',
             array(
               1 => $full,
-              2 => CRM_Utils_System::url('civicrm/event/register', array('id' => $dao->entity_ref_id, 'reset' => 1), FALSE, NULL, FALSE, TRUE),
+              2 => CRM_Utils_System::url('civicrm/event/register', array('id' => $eventId, 'reset' => 1), FALSE, NULL, FALSE, TRUE),
               'domain' => 'com.aghstrategies.eventmembershipsignup',
             )
           );

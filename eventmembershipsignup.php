@@ -58,9 +58,18 @@ function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objec
   // Save new registration or membership.
   if ($op == 'create' && $objectName == 'LineItem') {
     $price_field_value_id = 0;
-    $objPFV = is_array($objectRef) ? $objectRef['price_field_value_id'] : $objectRef->price_field_value_id;
-    $sql = "SELECT * FROM civicrm_option_signup WHERE price_option_id={$objPFV};";
-    $dao = CRM_Core_DAO::executeQuery($sql);
+    $args = array(
+      1 => array(
+        is_array($objectRef) ? $objectRef['price_field_value_id'] : $objectRef->price_field_value_id,
+        'Integer',
+      ),
+    );
+    $sql = <<<'HERESQL'
+SELECT id, price_option_id, entity_table, entity_ref_id
+FROM civicrm_option_signup
+WHERE price_option_id = %1
+HERESQL;
+    $dao = CRM_Core_DAO::executeQuery($sql, $args);
     if ($dao->fetch()) {
       $option_signup_id = $dao->id;
       $price_field_value_id = $dao->price_option_id;
@@ -179,10 +188,10 @@ JOIN civicrm_option_signup os
 LEFT JOIN civicrm_participant p
   ON p.event_id = os.entity_ref_id
   AND p.contact_id = c.contact_id
-WHERE c.id = $id
+WHERE c.id = %1
   AND os.entity_table = 'Event'
 HERESQL;
-    $dao = CRM_Core_DAO::executeQuery($sql);
+    $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
 
     // FIXME: for now, no updating of memberships, just events.  The reason?
     // This:

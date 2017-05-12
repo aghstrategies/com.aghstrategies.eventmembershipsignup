@@ -44,25 +44,36 @@ class CRM_Eventmembershipsignup_Admin {
    */
   public static function newOthersignup($price_option_id, $entity_table, $entityRefId) {
     $option_signup_id = 0;
-    $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = $price_option_id;";
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    if ($dao->fetch()) {
-      $option_signup_id = $dao->id;
-    }
-    if ($option_signup_id) {
-      $sql = <<<HERESQL
+    $args = array(
+      1 => array(
+        $price_option_id,
+        'Integer',
+      ),
+      2 => array(
+        $entity_table,
+        'String',
+      ),
+      3 => array(
+        $entityRefId,
+        'Integer',
+      ),
+    );
+    $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = %1";
+    if ($option_signup_id = CRM_Core_DAO::singleValueQuery($sql, $args)) {
+      $args[1][0] = $option_signup_id;
+      $sql = <<<'HERESQL'
 UPDATE civicrm_option_signup
-SET entity_ref_id = $entityRefId, entity_table = "$entity_table"
-WHERE id = $option_signup_id
+SET entity_ref_id = %3, entity_table = %2
+WHERE id = %1
 HERESQL;
     }
     else {
-      $sql = <<<HERESQL
+      $sql = <<<'HERESQL'
 INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id)
-VALUES ($price_option_id, "$entity_table", $entityRefId)
+VALUES (%1, %2, %3)
 HERESQL;
     }
-    $dao = CRM_Core_DAO::executeQuery($sql);
+    CRM_Core_DAO::executeQuery($sql);
   }
 
   /**
@@ -173,8 +184,8 @@ HERESQL;
     $form->assign('eventmembershipvalue', 0);
     $defaults = array();
     if (!empty($id)) {
-      $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = {$id};";
-      $dao = CRM_Core_DAO::executeQuery($sql);
+      $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = %1";
+      $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
       if ($dao->fetch()) {
         if ($dao->entity_table == 'Event') {
           $defaults['othersignup'] = 'Participant';
@@ -231,16 +242,8 @@ HERESQL;
 
       default:
         // Clean out additional signup that might be in there.
-        $option_signup_id = 0;
-        $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = {$id};";
-        $dao = CRM_Core_DAO::executeQuery($sql);
-        if ($dao->fetch()) {
-          $option_signup_id = $dao->id;
-        }
-        if ($option_signup_id) {
-          $sql = "DELETE FROM civicrm_option_signup WHERE id={$option_signup_id};";
-          CRM_Core_DAO::executeQuery($sql);
-        }
+        $sql = "DELETE FROM civicrm_option_signup WHERE price_option_id = %1";
+        CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
         break;
     }
   }
