@@ -21,7 +21,7 @@
   <civix>
     <namespace>CRM/Eventmembershipsignup</namespace>
   </civix>
-  <comment>
+  <comments>
     An administrator may tie an option in a price field to an event or membership type.  When a site visitor registers for an event and selects a price option, they will be registered for the additional event or have a new or renewed membership with that membership type.
-  </comment>
+  </comments>
 </extension>
