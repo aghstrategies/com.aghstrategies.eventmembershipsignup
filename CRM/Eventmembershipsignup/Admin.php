@@ -73,7 +73,7 @@ INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id)
 VALUES (%1, %2, %3)
 HERESQL;
     }
-    CRM_Core_DAO::executeQuery($sql);
+    CRM_Core_DAO::executeQuery($sql, $args);
   }
 
   /**
