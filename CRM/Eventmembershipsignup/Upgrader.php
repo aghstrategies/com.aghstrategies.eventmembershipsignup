@@ -28,7 +28,7 @@ CREATE TABLE `civicrm_option_signup` (
   CONSTRAINT `FK_civicrm_option_signup_price_option_id` FOREIGN KEY (`price_option_id`) REFERENCES `civicrm_price_field_value` (`id`) ON DELETE CASCADE
 )
 HERESQL;
-    return $this->executeSql($sql);
+    CRM_Core_DAO::executeQuery($sql, [], TRUE, NULL, FALSE, FALSE, FALSE);
   }
 
   public function uninstall() {
