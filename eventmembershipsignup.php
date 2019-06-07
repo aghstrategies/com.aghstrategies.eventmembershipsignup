@@ -50,7 +50,6 @@ function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
   }
 }
 
-
 /**
  * Implements hook_civicrm_post().
  */
