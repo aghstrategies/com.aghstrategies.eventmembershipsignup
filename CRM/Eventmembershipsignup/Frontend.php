@@ -134,4 +134,88 @@ HERESQL;
     $element->setText("$origVal<br/><span class=\"description\">$message</span>");
   }
 
+  /**
+   * Process Event Add-ons
+   * @param  int $price_field_value_id    Price Option Selected
+   * @param  int $entityRefId             Id of Event Registration to Add on
+   * @param  object $objectRef            Object being processed (Participant or Membership Record)
+   */
+  public static function registerForEventAddons($price_field_value_id, $entityRefId, $objectRef) {
+    try {
+      $objEntity = is_array($objectRef) ? $objectRef['entity_id'] : $objectRef->entity_id;
+      $participant = civicrm_api3('participant', 'getSingle', array('id' => $objEntity));
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $error = $e->getMessage();
+      CRM_Core_Session::setStatus($error, ts('Error finding your registration for addons', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+    }
+    try {
+      $newPartParams = array('event_id' => $entityRefId);
+      $fillFields = array(
+        'contact_id',
+        'participant_register_date',
+        'participant_source',
+        'participant_status_id',
+        'participant_is_pay_later',
+        'participant_registered_by_id',
+        'participant_role_id',
+      );
+      foreach ($fillFields as $fillField) {
+        if (isset($participant[$fillField])) {
+          $newPartParams[$fillField] = $participant[$fillField];
+        }
+      }
+      $newParticipant = civicrm_api3('participant', 'create', $newPartParams);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $error = $e->getMessage();
+      CRM_Core_Error::debug_var('Problem registering for add-on event', $newPartParams);
+      CRM_Core_Session::setStatus($error, ts('Problem registering for add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+    }
+  }
+
+  /**
+   * Process Membership Add-ons
+   * @param  int $price_field_value_id    Price Option Selected
+   * @param  int $entityRefId             Id of Membership to Add on
+   * @param  object $objectRef            Object being processed (Participant or Membership Record)
+   */
+  public static function registerForMembershipAddons($price_field_value_id, $entityRefId, $objectRef) {
+    try {
+      $newMemParams = array(
+        'membership_type_id' => $entityRefId,
+        'contact_id' => $participant['contact_id'],
+        'is_pay_later' => $participant['participant_is_pay_later'],
+        'source' => ts('Event Sign Up', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
+        'num_terms' => 1,
+      );
+      $memTypes = civicrm_api3('MembershipType', 'get', array('return' => "member_of_contact_id"));
+      $memTypeOrg = CRM_Utils_Array::value('member_of_contact_id', CRM_Utils_Array::value($entityRefId, $memTypes['values'], array()));
+      if ($memTypeOrg) {
+        $currentMem = civicrm_api3('Membership', 'get', array(
+          'sequential' => 1,
+          'contact_id' => $participant['contact_id'],
+          'options' => array('sort' => "end_date DESC"),
+        ));
+        if ($currentMem['count'] > 0) {
+          foreach ($currentMem['values'] as $memV) {
+            if (CRM_Utils_Array::value($memV['membership_type_id'], $memTypes['values'])) {
+              if ($memTypeOrg == CRM_Utils_Array::value('member_of_contact_id', $memTypes['values'][$memV['membership_type_id']])) {
+                $newMemParams['id'] = $memV['id'];
+                $newMemParams['source'] = CRM_Utils_Array::value('source', $memV, $newMemParams['source']);
+                $newMemParams['skipStatusCal'] = 0;
+                break;
+              }
+            }
+          }
+        }
+      }
+      $newMembership = civicrm_api3('Membership', 'create', $newMemParams);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $error = $e->getMessage();
+      CRM_Core_Session::setStatus($error, ts('Add-on Membership Problem', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+    }
+  }
+
 }
