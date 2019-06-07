@@ -9,14 +9,15 @@ Follow the standard CiviCRM extension installation procedure.
 ## Usage is simple
 
 1. When creating or editing a price option (a radio or checkbox option for a price ﬁeld), you may select “Other sign up” as Participant or Membership.
-2. Select the membership type or event that the membership or participant record should be created for.
+2. Select the membership type(s) or event(s) that the membership or participant record should be created for.
 3. People who select the option while registering for an event that uses your price set will then be registered for the other event or have a membership added.
 
-![Field Options Setup](/images/eas-field-options-setup.jpg)
+![Field Options Setup](/images/eas-field-options-setup.png)
 
 
 ## Caveats
 
+* One can select one or more Events for a price option OR one or more memberships for a price option. One cannot configure a single price option that registers the user for one event and one membership.
 * The payment is not associated with the membership or participant record.  You may want to accommodate this in bookkeeping, or you may not care.  (And what you consider to be the other event’s share of the income might be greater than the option’s price.)
 * Memberships are started/renewed immediately, even if the event registration is pay-later.
 * Options corresponding to events that are full will be disabled, even if a waitlist is available.  (A notice and link will allow joining the waitlist separately.)
