@@ -33,6 +33,12 @@ class CRM_Eventmembershipsignup_Frontend {
             self::validateOption($option, $element);
           }
         }
+        // TODO currently if one is using a select field options are not disabled properly
+        // elseif (is_a($eGroup, 'HTML_QuickForm_select')) {
+        //   if (!empty($eGroup->getValue()[0])) {
+        //     self::validateOption($eGroup->getValue()[0], $element);
+        //   }
+        // }
       }
     }
   }
@@ -56,7 +62,9 @@ WHERE price_option_id = %1
   AND entity_table = 'Event'
 HERESQL;
 
-    if ($eventId = CRM_Core_DAO::singleValueQuery($sql, array(1 => array($option, 'Integer')))) {
+    $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($option, 'Integer')));
+    while ($dao->fetch()) {
+      $eventId = $dao->entity_ref_id;
       try {
         $event = civicrm_api3('Event', 'getsingle', array(
           'sequential' => 1,
@@ -68,14 +76,13 @@ HERESQL;
             'registration_end_date',
             'end_date',
           ),
-          'id' => $eventId,
+          'id' => $dao->entity_ref_id,
         ));
       }
       catch (CiviCRM_API3_Exception $e) {
         CRM_Core_Error::debug_var('Cannot find event', $e);
         return;
       }
-
       // Registration and/or event is over
       $endDates = array(
         'end_date',
@@ -85,7 +92,7 @@ HERESQL;
         if (!empty($event[$dateField])) {
           if (time() > strtotime($event[$dateField])) {
             self::disableElement($element, ts(
-              'Registration for this event is closed.',
+              'Registration for one or more of the events in this option is closed.',
               array('domain' => 'com.aghstrategies.eventmembershipsignup')
             ));
             return;
