@@ -32,43 +32,77 @@ class CRM_Eventmembershipsignup_Admin {
     }
   }
 
+  public static function deleteAddOn($price_option_id, $entity_ref_id, $entity_table) {
+    $sql = "DELETE FROM civicrm_option_signup WHERE price_option_id = %1 AND entity_ref_id = %2 AND entity_table = %3";
+    CRM_Core_DAO::executeQuery($sql, [
+      1 => [$price_option_id, 'Integer'],
+      2 => [$entity_ref_id, 'Integer'],
+      3 => [$entity_table, 'String'],
+    ]);
+  }
+
   /**
-   * Saves add-on event or membership type.
+   * Updates add-on event or membership options
    *
    * @param int $price_option_id
    *   The ID of the price field value.
    * @param string $entity_table
    *   Whether this is a membership type or event.
    * @param int $entityRefId
-   *   The ID of the membership type or event.
+   *   The IDs of the membership type or event.
    */
-  public static function newOthersignup($price_option_id, $entity_table, $entityRefId) {
-    $option_signup_id = 0;
-    $sql = "DELETE FROM civicrm_option_signup WHERE price_option_id = %1";
-    CRM_Core_DAO::executeQuery($sql, array(1 => array($price_option_id, 'Integer')));
+  public static function updateAdditionalSignups($price_option_id, $entity_table, $entityRefId) {
+    // get existing events/or memberships options saved for this price option
+    $lookup = "SELECT * FROM civicrm_option_signup WHERE price_option_id = %1";
+    $existing = CRM_Core_DAO::executeQuery($lookup, [
+      1 => [$price_option_id, 'Integer'],
+    ]);
+    $currentAdditional = [];
+    while ($existing->fetch()) {
+      if ($existing->entity_table == $entity_table) {
+        $currentAdditional[] = $existing->entity_ref_id;
+      }
+      else {
+        self::deleteAddOn($existing->price_option_id, $existing->entity_ref_id, $existing->entity_table);
+      }
+    }
 
+    // options as updated by the user
     $otherRefs = explode(',', $entityRefId);
-    foreach ($otherRefs as $key => $ref) {
-      if (!empty($ref)) {
-        $args = array(
-          1 => array(
-            $price_option_id,
-            'Integer',
-          ),
-          2 => array(
-            $entity_table,
-            'String',
-          ),
-          3 => array(
-            $ref,
-            'Integer',
-          ),
-        );
-        $sql = <<<'HERESQL'
+
+    // delete if needed
+    $delete = array_diff($currentAdditional, $otherRefs);
+    if (!empty($delete)) {
+      foreach ($delete as $key => $ref) {
+        self::deleteAddOn($price_option_id, $ref, $entity_table);
+      }
+    }
+
+    // add if needed
+    $add = array_diff($otherRefs, $currentAdditional);
+    if (!empty($add)) {
+      foreach ($add as $key => $ref) {
+        if (!empty($ref)) {
+          $args = [
+            1 => [
+              $price_option_id,
+              'Integer',
+            ],
+            2 => array(
+              $entity_table,
+              'String',
+            ),
+            3 => [
+              $ref,
+              'Integer',
+            ],
+          ];
+          $sql = <<<'HERESQL'
 INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id)
 VALUES (%1, %2, %3)
 HERESQL;
-        CRM_Core_DAO::executeQuery($sql, $args);
+          CRM_Core_DAO::executeQuery($sql, $args);
+        }
       }
     }
   }
@@ -166,7 +200,7 @@ HERESQL;
       }
       $priceOptionId = self::findOptionByValues($vals);
 
-      self::newOthersignup($priceOptionId, $entityTable, $entityRefId);
+      self::updateAdditionalSignups($priceOptionId, $entityTable, $entityRefId);
     }
   }
 
@@ -234,11 +268,11 @@ HERESQL;
     }
     switch (CRM_Utils_Array::value('othersignup', $form->_submitValues)) {
       case 'Membership':
-        self::newOthersignup($id, 'MembershipType', $form->_submitValues['membershipselect']);
+        self::updateAdditionalSignups($id, 'MembershipType', $form->_submitValues['membershipselect']);
         break;
 
       case 'Participant':
-        self::newOthersignup($id, 'Event', $form->_submitValues['eventselect']);
+        self::updateAdditionalSignups($id, 'Event', $form->_submitValues['eventselect']);
         break;
 
       default:
