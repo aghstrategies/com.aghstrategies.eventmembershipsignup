@@ -62,6 +62,7 @@ class CRM_Eventmembershipsignup_Admin {
       if ($existing->entity_table == $entity_table) {
         $currentAdditional[] = $existing->entity_ref_id;
       }
+      // If the user is switching what entity they are adding on delete the options for the old entity.
       else {
         self::deleteAddOn($existing->price_option_id, $existing->entity_ref_id, $existing->entity_table);
       }
@@ -70,7 +71,7 @@ class CRM_Eventmembershipsignup_Admin {
     // options as updated by the user
     $otherRefs = explode(',', $entityRefId);
 
-    // delete if needed
+    // Deal with add-ons that the user as removed
     $delete = array_diff($currentAdditional, $otherRefs);
     if (!empty($delete)) {
       foreach ($delete as $key => $ref) {
@@ -78,7 +79,7 @@ class CRM_Eventmembershipsignup_Admin {
       }
     }
 
-    // add if needed
+    // Deal with add-ons that the user has added
     $add = array_diff($otherRefs, $currentAdditional);
     if (!empty($add)) {
       foreach ($add as $key => $ref) {
