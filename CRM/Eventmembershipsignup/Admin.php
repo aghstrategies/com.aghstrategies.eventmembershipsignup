@@ -57,15 +57,19 @@ class CRM_Eventmembershipsignup_Admin {
     $existing = CRM_Core_DAO::executeQuery($lookup, [
       1 => [$price_option_id, 'Integer'],
     ]);
-    $currentAdditional = [];
+    $deleteMes = $currentAdditional = [];
     while ($existing->fetch()) {
       if ($existing->entity_table == $entity_table) {
         $currentAdditional[] = $existing->entity_ref_id;
       }
+
       // If the user is switching what entity they are adding on delete the options for the old entity.
       else {
-        self::deleteAddOn($existing->price_option_id, $existing->entity_ref_id, $existing->entity_table);
+        $deleteMes[$existing->entity_ref_id] = $existing->entity_table;
       }
+    }
+    foreach ($deleteMes as $ref => $table) {
+      self::deleteAddOn($price_option_id, $ref, $table);
     }
 
     // options as updated by the user
