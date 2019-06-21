@@ -44,36 +44,33 @@ class CRM_Eventmembershipsignup_Admin {
    */
   public static function newOthersignup($price_option_id, $entity_table, $entityRefId) {
     $option_signup_id = 0;
-    $args = array(
-      1 => array(
-        $price_option_id,
-        'Integer',
-      ),
-      2 => array(
-        $entity_table,
-        'String',
-      ),
-      3 => array(
-        $entityRefId,
-        'Integer',
-      ),
-    );
-    $sql = "SELECT id FROM civicrm_option_signup WHERE price_option_id = %1";
-    if ($option_signup_id = CRM_Core_DAO::singleValueQuery($sql, $args)) {
-      $args[1][0] = $option_signup_id;
-      $sql = <<<'HERESQL'
-UPDATE civicrm_option_signup
-SET entity_ref_id = %3, entity_table = %2
-WHERE id = %1
-HERESQL;
-    }
-    else {
-      $sql = <<<'HERESQL'
+    $sql = "DELETE FROM civicrm_option_signup WHERE price_option_id = %1";
+    CRM_Core_DAO::executeQuery($sql, array(1 => array($price_option_id, 'Integer')));
+
+    $otherRefs = explode(',', $entityRefId);
+    foreach ($otherRefs as $key => $ref) {
+      if (!empty($ref)) {
+        $args = array(
+          1 => array(
+            $price_option_id,
+            'Integer',
+          ),
+          2 => array(
+            $entity_table,
+            'String',
+          ),
+          3 => array(
+            $ref,
+            'Integer',
+          ),
+        );
+        $sql = <<<'HERESQL'
 INSERT INTO civicrm_option_signup (price_option_id, entity_table, entity_ref_id)
 VALUES (%1, %2, %3)
 HERESQL;
+        CRM_Core_DAO::executeQuery($sql, $args);
+      }
     }
-    CRM_Core_DAO::executeQuery($sql, $args);
   }
 
   /**
@@ -90,11 +87,13 @@ HERESQL;
       $form->add('select', "othersignup[$i]", ts('Additional Signup?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
       $form->addEntityRef("membershipselect[$i]", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
         'entity' => 'membershipType',
+        'multiple' => TRUE,
         'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
         'select' => array('minimumInputLength' => 0),
       ));
       $form->addEntityRef("eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
         'entity' => 'event',
+        'multiple' => TRUE,
         'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
         'select' => array('minimumInputLength' => 0),
       ));
@@ -186,14 +185,14 @@ HERESQL;
     if (!empty($id)) {
       $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = %1";
       $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
-      if ($dao->fetch()) {
+      while ($dao->fetch()) {
         if ($dao->entity_table == 'Event') {
           $defaults['othersignup'] = 'Participant';
-          $defaults['eventselect'] = $dao->entity_ref_id;
+          $defaults['eventselect'][] = $dao->entity_ref_id;
         }
         elseif ($dao->entity_table == 'MembershipType') {
           $defaults['othersignup'] = 'Membership';
-          $defaults['membershipselect'] = $dao->entity_ref_id;
+          $defaults['membershipselect'][] = $dao->entity_ref_id;
         }
       }
     }
@@ -202,11 +201,13 @@ HERESQL;
     $form->add('select', 'othersignup', ts('Other Sign Up?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
     $form->addEntityRef("membershipselect", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
       'entity' => 'membershipType',
+      'multiple' => TRUE,
       'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
       'select' => array('minimumInputLength' => 0),
     ));
     $form->addEntityRef('eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
       'entity' => 'event',
+      'multiple' => TRUE,
       'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
       'select' => array('minimumInputLength' => 0),
     ));
