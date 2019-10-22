@@ -6,7 +6,6 @@ Scenario: Completing pay-later payments for an event with an additional event si
   When an admin user clicks Record Payment on the contribution
     And the payment is equal to the total amount due
   Then the contribution should have the status Completed
-    And the participant record for the first event should have the status Registered
     And the participant record for the second event should have the status Registered
 
 Scenario: Making partial payments for an event with an additional event signup
@@ -17,7 +16,6 @@ Scenario: Making partial payments for an event with an additional event signup
   When an admin user clicks Record Payment on the contribution
     And the payment is less than the total amount due
   Then the contribution should have the status Partially Paid
-    And the participant record for the first event should have the status Partially Paid
     And the participant record for the second event should have the status Partially Paid
 
 Scenario: Completing partial payments for an event with an additional event signup
@@ -29,5 +27,4 @@ Scenario: Completing partial payments for an event with an additional event sign
   When an admin user clicks Record Payment on the contribution
     And the payment is equal to the remaining amount due
   Then the contribution should have the status Completed
-    And the participant record for the first event should have the status Registered
     And the participant record for the second event should have the status Registered

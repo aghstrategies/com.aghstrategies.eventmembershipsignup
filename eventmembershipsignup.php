@@ -88,18 +88,46 @@ HERESQL;
 
 /**
  * Check if the change in the contribution status should trigger a change to the participant status
- * @param  array $contribStatusOptions      array of contribution status options
- * @param  array $participantStatusOptions  array of participant status options
  * @param  int $contributionStatusBeforeId  Contribution Status id before this change
  * @param  int $contributionStatusGoingToId Contribution Status id going to
  * @param  int $participantStatusIdNow      Participant Status Id
  * @param  int $participantId               Participant Id
  */
-function eventmembershipsignup_updateparticipantstatus($contribStatusOptions, $participantStatusOptions, $contributionStatusBeforeId, $contributionStatusGoingToId, $participantStatusIdNow, $participantId) {
+function eventmembershipsignup_updateparticipantstatus($contributionStatusBeforeId, $contributionStatusGoingToId, $participantStatusIdNow, $participantId) {
+  // Get Contribution Status Options
+  try {
+    $contribStatusAPI = civicrm_api3('Contribution', 'getoptions', array(
+      'field' => "contribution_status_id",
+      'context' => "validate",
+    ));
+  }
+  catch (CiviCRM_API3_Exception $e) {
+    $error = $e->getMessage();
+    CRM_Core_Error::debug_log_message(ts('API Error %1', array(
+      'domain' => 'com.aghstrategies.eventmembershipsignup',
+      1 => $error,
+    )));
+  }
+
+  // Get Participant Status Options
+  try {
+    $participantStatusAPI = civicrm_api3('Participant', 'getoptions', array(
+      'field' => "participant_status_id",
+      'context' => "validate",
+    ));
+  }
+  catch (CiviCRM_API3_Exception $e) {
+    $error = $e->getMessage();
+    CRM_Core_Error::debug_log_message(ts('API Error %1', array(
+      'domain' => 'com.aghstrategies.eventmembershipsignup',
+      1 => $error,
+    )));
+  }
+
   // Get status names from ids
-  $contributionStatusBefore = CRM_Utils_Array::value($contributionStatusBeforeId, $contribStatusOptions);
-  $contributionStatusGoingTo = CRM_Utils_Array::value($contributionStatusGoingToId, $contribStatusOptions);
-  $participantStatus = CRM_Utils_Array::value($participantStatusIdNow, $participantStatusOptions);
+  $contributionStatusBefore = CRM_Utils_Array::value($contributionStatusBeforeId, $contribStatusAPI['values']);
+  $contributionStatusGoingTo = CRM_Utils_Array::value($contributionStatusGoingToId, $contribStatusAPI['values']);
+  $participantStatus = CRM_Utils_Array::value($participantStatusIdNow, $participantStatusAPI['values']);
 
   // We will only update participant ids if the contribution status is changing AND the participant status is listed here
   if ($contributionStatusBefore != $contributionStatusGoingTo && in_array($participantStatus, [
@@ -117,18 +145,18 @@ function eventmembershipsignup_updateparticipantstatus($contribStatusOptions, $p
       case 'Pending refund':
       case 'Partially paid':
       case 'Cancelled':
-        $updatedStatusId = array_search($contributionStatusGoingTo, $participantStatusOptions);
+        $updatedStatusId = array_search($contributionStatusGoingTo, $participantStatusAPI['values']);
         break;
 
       // IF the contribution going to Completed the participant status should be Registered
       case 'Completed':
-        $updatedStatusId = array_search('Registered', $participantStatusOptions);
+        $updatedStatusId = array_search('Registered', $participantStatusAPI['values']);
         break;
 
       // IF the contribution status is going to one of these pending statuses the participant status should be set to pending as well.
       case 'Pending':
       case 'In Progress':
-        $updatedStatusId = array_search('Pending from pay later', $participantStatusOptions);
+        $updatedStatusId = array_search('Pending from pay later', $participantStatusAPI['values']);
         break;
 
       // IF the contribution status is going to one of these statuses do not update the participant status at all
@@ -150,38 +178,7 @@ function eventmembershipsignup_updateparticipantstatus($contribStatusOptions, $p
  */
 function eventmembershipsignup_civicrm_pre($op, $objectName, $id, &$params) {
   if ($op == 'edit' && $objectName == 'Contribution') {
-
-    // Get Contribution Status Options
-    try {
-      $contribStatusAPI = civicrm_api3('Contribution', 'getoptions', array(
-        'field' => "contribution_status_id",
-        'context' => "validate",
-      ));
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      $error = $e->getMessage();
-      CRM_Core_Error::debug_log_message(ts('API Error %1', array(
-        'domain' => 'com.aghstrategies.eventmembershipsignup',
-        1 => $error,
-      )));
-    }
-
-    // Get Participant Status Options
-    try {
-      $participantStatusAPI = civicrm_api3('Participant', 'getoptions', array(
-        'field' => "participant_status_id",
-        'context' => "validate",
-      ));
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      $error = $e->getMessage();
-      CRM_Core_Error::debug_log_message(ts('API Error %1', array(
-        'domain' => 'com.aghstrategies.eventmembershipsignup',
-        1 => $error,
-      )));
-    }
-
-    // Get all Event Registrations associated with this Contribution (original or added by this extension)
+    // Get all Event Registrations added by the extension
 
     // FIXME: for now, no updating of memberships, just events.  The reason?
     // This:
@@ -201,19 +198,11 @@ LEFT JOIN civicrm_participant p
   AND p.contact_id = c.contact_id
 WHERE c.id = %1
   AND os.entity_table = 'Event'
-UNION
-SELECT pp.participant_id as participant_id, part.status_id as participant_status_id
-FROM `civicrm_participant_payment` pp
-LEFT JOIN civicrm_participant part
-  ON part.id = pp.participant_id
-WHERE pp.contribution_id = %1
 HERESQL;
     $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
 
     while ($dao->fetch()) {
       eventmembershipsignup_updateparticipantstatus(
-        $contribStatusAPI['values'],
-        $participantStatusAPI['values'],
         $params['prevContribution']->contribution_status_id,
         $params['contribution_status_id'],
         $dao->participant_status_id,
