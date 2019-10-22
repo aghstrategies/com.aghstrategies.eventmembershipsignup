@@ -87,26 +87,101 @@ HERESQL;
 }
 
 /**
+ * Check if the change in the contribution status should trigger a change to the participant status
+ * @param  array $contribStatusOptions      array of contribution status options
+ * @param  array $participantStatusOptions  array of participant status options
+ * @param  int $contributionStatusBeforeId  Contribution Status id before this change
+ * @param  int $contributionStatusGoingToId Contribution Status id going to
+ * @param  int $participantStatusIdNow      Participant Status Id
+ * @param  int $participantId               Participant Id
+ */
+function eventmembershipsignup_updateparticipantstatus($contribStatusOptions, $participantStatusOptions, $contributionStatusBeforeId, $contributionStatusGoingToId, $participantStatusIdNow, $participantId) {
+  // Get status names from ids
+  $contributionStatusBefore = CRM_Utils_Array::value($contributionStatusBeforeId, $contribStatusOptions);
+  $contributionStatusGoingTo = CRM_Utils_Array::value($contributionStatusGoingToId, $contribStatusOptions);
+  $participantStatus = CRM_Utils_Array::value($participantStatusIdNow, $participantStatusOptions);
+
+  // We will only update participant ids if the contribution status is changing AND the participant status is listed here
+  if ($contributionStatusBefore != $contributionStatusGoingTo && in_array($participantStatus, [
+    'Pending from pay later',
+    'Pending from incomplete transaction',
+    'Pending in cart',
+    'Partially paid',
+    'Registered',
+  ])) {
+
+    $updatedStatusId = NULL;
+
+    switch ($contributionStatusGoingTo) {
+      // IF the contribution is being updated to one of these statuses the participant status should be the same as the contribution status
+      case 'Pending refund':
+      case 'Partially paid':
+      case 'Cancelled':
+        $updatedStatusId = array_search($contributionStatusGoingTo, $participantStatusOptions);
+        break;
+
+      // IF the contribution going to Completed the participant status should be Registered
+      case 'Completed':
+        $updatedStatusId = array_search('Registered', $participantStatusOptions);
+        break;
+
+      // IF the contribution status is going to one of these pending statuses the participant status should be set to pending as well.
+      case 'Pending':
+      case 'In Progress':
+        $updatedStatusId = array_search('Pending from pay later', $participantStatusOptions);
+        break;
+
+      // IF the contribution status is going to one of these statuses do not update the participant status at all
+      case 'Refunded':
+      case 'Overdue':
+      case 'Chargeback':
+      case 'Failed':
+        break;
+    }
+    // If the updated status has been set update the participant record
+    if ($updatedStatusId) {
+      CRM_Event_BAO_Participant::updateParticipantStatus($participantId, $participantStatusIdNow, $updatedStatusId, TRUE);
+    }
+  }
+}
+
+/**
  * Implements hook_civicrm_pre().
  */
 function eventmembershipsignup_civicrm_pre($op, $objectName, $id, &$params) {
   if ($op == 'edit' && $objectName == 'Contribution') {
-    if (empty($params['prevContribution']->is_pay_later)
-      || CRM_Utils_Array::value('is_pay_later', $params, 1)
-      || empty($params['participant_id'])) {
-      return;
+
+    // Get Contribution Status Options
+    try {
+      $contribStatusAPI = civicrm_api3('Contribution', 'getoptions', array(
+        'field' => "contribution_status_id",
+        'context' => "validate",
+      ));
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $error = $e->getMessage();
+      CRM_Core_Error::debug_log_message(ts('API Error %1', array(
+        'domain' => 'com.aghstrategies.eventmembershipsignup',
+        1 => $error,
+      )));
     }
 
-    $contribStatusAPI = civicrm_api3('Contribution', 'getoptions', array(
-      'field' => "contribution_status_id",
-      'context' => "validate",
-    ));
+    // Get Participant Status Options
+    try {
+      $participantStatusAPI = civicrm_api3('Participant', 'getoptions', array(
+        'field' => "participant_status_id",
+        'context' => "validate",
+      ));
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $error = $e->getMessage();
+      CRM_Core_Error::debug_log_message(ts('API Error %1', array(
+        'domain' => 'com.aghstrategies.eventmembershipsignup',
+        1 => $error,
+      )));
+    }
 
-    $participantStatusAPI = civicrm_api3('Participant', 'getoptions', array(
-      'field' => "participant_status_id",
-      'context' => "validate",
-    ));
-
+    // Get all Event Registrations associated with this Contribution (original or added by this extension)
     $sql = <<<HERESQL
 SELECT p.id as participant_id, p.status_id as participant_status_id
 FROM civicrm_contribution c
@@ -119,30 +194,30 @@ LEFT JOIN civicrm_participant p
   AND p.contact_id = c.contact_id
 WHERE c.id = %1
   AND os.entity_table = 'Event'
+UNION
+SELECT pp.participant_id as participant_id, part.status_id as participant_status_id
+FROM `civicrm_participant_payment` pp
+LEFT JOIN civicrm_participant part
+  ON part.id = pp.participant_id
+WHERE pp.contribution_id = %1
 HERESQL;
     $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
 
-    // FIXME: for now, no updating of memberships, just events.  The reason?
-    // This:
-    // https://github.com/civicrm/civicrm-core/blob/4.7.15/CRM/Contribute/BAO/Contribution.php#L1810
-    // and the following 110 lines.  For now, add-on memberships are not held in
-    // pending status so there is no need to activate them when pay-later is
-    // resolved.
-    switch (CRM_Utils_Array::value($params['contribution_status_id'], $contribStatusAPI['values'])) {
-      case 'Cancelled':
-      case 'Failed':
-        $updatedStatusId = array_search('Cancelled', $participantStatusAPI['values']);
-        while ($dao->fetch()) {
-          CRM_Event_BAO_Participant::updateParticipantStatus($dao->participant_id, $dao->participant_status_id, $updatedStatusId, TRUE);
-        }
-        break;
-
-      case 'Completed':
-        $updatedStatusId = array_search('Registered', $participantStatusAPI['values']);
-        while ($dao->fetch()) {
-          CRM_Event_BAO_Participant::updateParticipantStatus($dao->participant_id, $dao->participant_status_id, $updatedStatusId, TRUE);
-        }
-        break;
+    while ($dao->fetch()) {
+      // FIXME: for now, no updating of memberships, just events.  The reason?
+      // This:
+      // https://github.com/civicrm/civicrm-core/blob/4.7.15/CRM/Contribute/BAO/Contribution.php#L1810
+      // and the following 110 lines.  For now, add-on memberships are not held in
+      // pending status so there is no need to activate them when pay-later is
+      // resolved.
+      eventmembershipsignup_updateparticipantstatus(
+        $contribStatusAPI['values'],
+        $participantStatusAPI['values'],
+        $params['prevContribution']->contribution_status_id,
+        $params['contribution_status_id'],
+        $dao->participant_status_id,
+        $dao->participant_id
+      );
     }
   }
 }
