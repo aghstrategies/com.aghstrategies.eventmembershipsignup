@@ -94,40 +94,12 @@ HERESQL;
  * @param  int $participantId               Participant Id
  */
 function eventmembershipsignup_updateparticipantstatus($contributionStatusBeforeId, $contributionStatusGoingToId, $participantStatusIdNow, $participantId) {
-  // Get Contribution Status Options
-  try {
-    $contribStatusAPI = civicrm_api3('Contribution', 'getoptions', array(
-      'field' => "contribution_status_id",
-      'context' => "validate",
-    ));
-  }
-  catch (CiviCRM_API3_Exception $e) {
-    $error = $e->getMessage();
-    CRM_Core_Error::debug_log_message(ts('API Error %1', array(
-      'domain' => 'com.aghstrategies.eventmembershipsignup',
-      1 => $error,
-    )));
-  }
-
-  // Get Participant Status Options
-  try {
-    $participantStatusAPI = civicrm_api3('Participant', 'getoptions', array(
-      'field' => "participant_status_id",
-      'context' => "validate",
-    ));
-  }
-  catch (CiviCRM_API3_Exception $e) {
-    $error = $e->getMessage();
-    CRM_Core_Error::debug_log_message(ts('API Error %1', array(
-      'domain' => 'com.aghstrategies.eventmembershipsignup',
-      1 => $error,
-    )));
-  }
 
   // Get status names from ids
-  $contributionStatusBefore = CRM_Utils_Array::value($contributionStatusBeforeId, $contribStatusAPI['values']);
-  $contributionStatusGoingTo = CRM_Utils_Array::value($contributionStatusGoingToId, $contribStatusAPI['values']);
-  $participantStatus = CRM_Utils_Array::value($participantStatusIdNow, $participantStatusAPI['values']);
+  $contributionStatusBefore = CRM_Contribute_PseudoConstant::contributionStatus($contributionStatusBeforeId, 'name');
+  $contributionStatusGoingTo = CRM_Contribute_PseudoConstant::contributionStatus($contributionStatusGoingToId, 'name');
+  $participantStatus = CRM_Event_PseudoConstant::participantStatus($participantStatusIdNow, NULL, "name");
+  $participantStatusOptions = CRM_Event_PseudoConstant::participantStatus();
 
   // We will only update participant ids if the contribution status is changing AND the participant status is listed here
   if ($contributionStatusBefore != $contributionStatusGoingTo && in_array($participantStatus, [
@@ -145,18 +117,18 @@ function eventmembershipsignup_updateparticipantstatus($contributionStatusBefore
       case 'Pending refund':
       case 'Partially paid':
       case 'Cancelled':
-        $updatedStatusId = array_search($contributionStatusGoingTo, $participantStatusAPI['values']);
+        $updatedStatusId = array_search($contributionStatusGoingTo, $participantStatusOptions);
         break;
 
       // IF the contribution going to Completed the participant status should be Registered
       case 'Completed':
-        $updatedStatusId = array_search('Registered', $participantStatusAPI['values']);
+        $updatedStatusId = array_search('Registered', $participantStatusOptions);
         break;
 
       // IF the contribution status is going to one of these pending statuses the participant status should be set to pending as well.
       case 'Pending':
       case 'In Progress':
-        $updatedStatusId = array_search('Pending from pay later', $participantStatusAPI['values']);
+        $updatedStatusId = array_search('Pending from pay later', $participantStatusOptions);
         break;
 
       // IF the contribution status is going to one of these statuses do not update the participant status at all
