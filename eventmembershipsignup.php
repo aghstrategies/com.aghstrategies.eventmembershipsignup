@@ -182,6 +182,13 @@ function eventmembershipsignup_civicrm_pre($op, $objectName, $id, &$params) {
     }
 
     // Get all Event Registrations associated with this Contribution (original or added by this extension)
+
+    // FIXME: for now, no updating of memberships, just events.  The reason?
+    // This:
+    // https://github.com/civicrm/civicrm-core/blob/4.7.15/CRM/Contribute/BAO/Contribution.php#L1810
+    // and the following 110 lines.  For now, add-on memberships are not held in
+    // pending status so there is no need to activate them when pay-later is
+    // resolved.
     $sql = <<<HERESQL
 SELECT p.id as participant_id, p.status_id as participant_status_id
 FROM civicrm_contribution c
@@ -204,12 +211,6 @@ HERESQL;
     $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
 
     while ($dao->fetch()) {
-      // FIXME: for now, no updating of memberships, just events.  The reason?
-      // This:
-      // https://github.com/civicrm/civicrm-core/blob/4.7.15/CRM/Contribute/BAO/Contribution.php#L1810
-      // and the following 110 lines.  For now, add-on memberships are not held in
-      // pending status so there is no need to activate them when pay-later is
-      // resolved.
       eventmembershipsignup_updateparticipantstatus(
         $contribStatusAPI['values'],
         $participantStatusAPI['values'],
