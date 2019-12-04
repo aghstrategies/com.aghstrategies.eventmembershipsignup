@@ -181,6 +181,11 @@ HERESQL;
    * @param  object $objectRef            Object being processed (Participant or Membership Record)
    */
   public static function registerForMembershipAddons($price_field_value_id, $entityRefId, $objectRef) {
+    //sanity checks
+    if (empty($participant) && $objectRef->entity_table == 'civicrm_participant' && $objectRef->entity_id) {
+      //get some context for a membership add
+      $participant = civicrm_api3('Participant', 'getsingle', array('id' => $objectRef->entity_id));
+    }
     try {
       $newMemParams = array(
         'membership_type_id' => $entityRefId,
