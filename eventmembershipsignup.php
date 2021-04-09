@@ -56,13 +56,18 @@ function eventmembershipsignup_civicrm_postProcess($formName, &$form) {
 function eventmembershipsignup_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   // Save new registration or membership.
   if ($op == 'create' && $objectName == 'LineItem') {
-    $price_field_value_id = 0;
-    $args = array(
-      1 => array(
-        is_array($objectRef) ? $objectRef['price_field_value_id'] : $objectRef->price_field_value_id,
-        'Integer',
-      ),
-    );
+    $priceFieldValueID = is_array($objectRef) ? $objectRef['price_field_value_id'] : $objectRef->price_field_value_id;
+    // If we've been triggered via API3 Contribution.repeattransaction etc. we may end up with text "null" instead of actual NULL.
+    if ($priceFieldValueID === 'null') $priceFieldValueID = NULL;
+    if (empty($priceFieldValueID)) {
+      // For example "percentagepricesetfield" creates percentage lineItem with NULL price_field_value_id
+      // In this case there is nothing to do because there will be no linked event/membership for that lineItem
+      // If we try to run the query it will crash.
+      return;
+    }
+    $args = [
+      1 => [$priceFieldValueID, 'Integer'],
+    ];
     $sql = <<<'HERESQL'
 SELECT id, price_option_id, entity_table, entity_ref_id
 FROM civicrm_option_signup
