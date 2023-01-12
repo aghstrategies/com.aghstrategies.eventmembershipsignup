@@ -135,6 +135,13 @@ HERESQL;
         'multiple' => TRUE,
         'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
         'select' => array('minimumInputLength' => 0),
+        'api' => array(
+          'params' => array(
+            'start_date' => array('>=' => 'NOW'),
+            'id' => $dao->entity_ref_id,
+            'options' => array('or' => array(array('id', 'start_date')))
+          )
+        ),
       ));
       $selectors[] = $i;
     }
@@ -249,6 +256,13 @@ HERESQL;
       'multiple' => TRUE,
       'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
       'select' => array('minimumInputLength' => 0),
+      'api' => array(
+        'params' => array(
+          'start_date' => array('>=' => 'NOW'),
+          'id' => $dao->entity_ref_id,
+          'options' => array('or' => array(array('id', 'start_date')))
+        )
+      ),
     ));
 
     $form->setDefaults($defaults);
