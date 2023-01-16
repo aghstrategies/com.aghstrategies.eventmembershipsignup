@@ -137,9 +137,7 @@ HERESQL;
         'select' => array('minimumInputLength' => 0),
         'api' => array(
           'params' => array(
-            'start_date' => array('>=' => 'NOW'),
-            'id' => $dao->entity_ref_id,
-            'options' => array('or' => array(array('id', 'start_date')))
+            'start_date' => array('>=' => 'NOW')
           )
         ),
       ));
@@ -259,7 +257,7 @@ HERESQL;
       'api' => array(
         'params' => array(
           'start_date' => array('>=' => 'NOW'),
-          'id' => $dao->entity_ref_id,
+          'id' => $dao->entity_ref_id ? $dao->entity_ref_id : 0,
           'options' => array('or' => array(array('id', 'start_date')))
         )
       ),
