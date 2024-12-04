@@ -2,7 +2,7 @@
 {* Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt) *}
 
 {crmScope extensionKey='com.aghstrategies.eventmembershipsignup'}
-{crmScript ext=com.aghstrategies.eventmembershipsignup file=js/priceoptionOthersignup.js}
+{crmScript ext='com.aghstrategies.eventmembershipsignup' file='js/priceoptionOthersignup.js'}
 
 <table class="deleteme">
   <tbody id="other-sign-up">
