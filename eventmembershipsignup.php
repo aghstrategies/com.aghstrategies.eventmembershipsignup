@@ -200,7 +200,6 @@ function eventmembershipsignup_civicrm_config(&$config) {
  * Implements hook_civicrm_xmlMenu().
  */
 function eventmembershipsignup_civicrm_xmlMenu(&$files) {
-  _eventmembershipsignup_civix_civicrm_xmlMenu($files);
 }
 
 /**
@@ -214,7 +213,7 @@ function eventmembershipsignup_civicrm_install() {
  * Implements hook_civicrm_uninstall().
  */
 function eventmembershipsignup_civicrm_uninstall() {
-  return _eventmembershipsignup_civix_civicrm_uninstall();
+  return;
 }
 
 /**
@@ -228,14 +227,14 @@ function eventmembershipsignup_civicrm_enable() {
  * Implements hook_civicrm_disable().
  */
 function eventmembershipsignup_civicrm_disable() {
-  return _eventmembershipsignup_civix_civicrm_disable();
+  return;
 }
 
 /**
  * Implements hook_civicrm_upgrade().
  */
 function eventmembershipsignup_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
-  return _eventmembershipsignup_civix_civicrm_upgrade($op, $queue);
+  return;
 }
 
 /**
@@ -245,5 +244,13 @@ function eventmembershipsignup_civicrm_upgrade($op, CRM_Queue_Queue $queue = NUL
  * is installed, disabled, uninstalled.
  */
 function eventmembershipsignup_civicrm_managed(&$entities) {
-  return _eventmembershipsignup_civix_civicrm_managed($entities);
+  return;
+}
+
+/**
+ * Implements hook_civicrm_postInstall().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_postInstall
+ */
+function eventmembershipsignup_civicrm_postInstall() {
 }
