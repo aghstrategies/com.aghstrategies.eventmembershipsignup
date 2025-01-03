@@ -10,7 +10,7 @@
 /**
  * Collection of upgrade steps.
  */
-class CRM_Eventmembershipsignup_Upgrader extends CRM_Eventmembershipsignup_Upgrader_Base {
+class CRM_Eventmembershipsignup_Upgrader extends CRM_Extension_Upgrader_Base {
 
   /**
    * Installer creates table to track addons for price options.
