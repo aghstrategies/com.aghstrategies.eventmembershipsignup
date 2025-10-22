@@ -195,7 +195,7 @@ HERESQL;
         'num_terms' => 1,
       );
       $memTypes = civicrm_api3('MembershipType', 'get', array('return' => "member_of_contact_id"));
-      $memTypeOrg = CRM_Utils_Array::value('member_of_contact_id', CRM_Utils_Array::value($entityRefId, $memTypes['values'], array()));
+      $memTypeOrg = $memTypes['values'][$entityRefId]['member_of_contact_id'] ?? NULL;
       if ($memTypeOrg) {
         $currentMem = civicrm_api3('Membership', 'get', array(
           'sequential' => 1,
@@ -204,10 +204,10 @@ HERESQL;
         ));
         if ($currentMem['count'] > 0) {
           foreach ($currentMem['values'] as $memV) {
-            if (CRM_Utils_Array::value($memV['membership_type_id'], $memTypes['values'])) {
-              if ($memTypeOrg == CRM_Utils_Array::value('member_of_contact_id', $memTypes['values'][$memV['membership_type_id']])) {
+            if (!empty($memTypes['values'][$memV['membership_type_id']])) {
+              if ($memTypeOrg == ($memTypes['values'][$memV['membership_type_id']]['member_of_contact_id'] ?? NULL)) {
                 $newMemParams['id'] = $memV['id'];
-                $newMemParams['source'] = CRM_Utils_Array::value('source', $memV, $newMemParams['source']);
+                $newMemParams['source'] = $memV['source'] ?? $newMemParams['source'];
                 $newMemParams['skipStatusCal'] = 0;
                 break;
               }
