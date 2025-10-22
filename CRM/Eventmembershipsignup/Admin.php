@@ -27,7 +27,7 @@ class CRM_Eventmembershipsignup_Admin {
         $this->entityOptions['Participant'] = ts('Participant', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
       }
     }
-    catch (CiviCRM_API3_Exception $e) {
+    catch (CRM_Core_Exception $e) {
       CRM_Core_Error::debug_var('Cannot find enabled components', $e);
     }
   }
@@ -356,7 +356,7 @@ HERESQL;
     try {
       return civicrm_api3($fieldOrOption, 'getvalue', $searchParams);
     }
-    catch (CiviCRM_API3_Exception $e) {
+    catch (CRM_Core_Exception $e) {
       CRM_Core_Error::debug_var('Failed to find price option/field just created', $e);
     }
   }
