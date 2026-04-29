@@ -181,6 +181,25 @@ HERESQL;
    * @param  object $objectRef            Object being processed (Participant or Membership Record)
    */
   public static function registerForMembershipAddons($price_field_value_id, $entityRefId, $objectRef) {
+    // Only extend membership for completed payments or genuine pay-later.
+    // Failed/incomplete online transactions have is_pay_later=0 and status=Pending
+    // and must not trigger a membership extension.
+    $contributionId = is_array($objectRef) ? CRM_Utils_Array::value('contribution_id', $objectRef) : $objectRef->contribution_id;
+    if ($contributionId) {
+      try {
+        $contribution = civicrm_api3('Contribution', 'getsingle', [
+          'id' => $contributionId,
+          'return' => ['contribution_status_id', 'is_pay_later'],
+        ]);
+        $statusName = CRM_Contribute_PseudoConstant::contributionStatus($contribution['contribution_status_id'], 'name');
+        if ($statusName !== 'Completed' && empty($contribution['is_pay_later'])) {
+          return;
+        }
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        return;
+      }
+    }
     //sanity checks
     if (empty($participant) && $objectRef->entity_table == 'civicrm_participant' && $objectRef->entity_id) {
       //get some context for a membership add
