@@ -257,7 +257,7 @@ HERESQL;
       'api' => array(
         'params' => array(
           'start_date' => array('>=' => 'NOW'),
-          'id' => $dao->entity_ref_id ? $dao->entity_ref_id : 0,
+          'id' => $dao->entity_ref_id ?? NULL,
           'options' => array('or' => array(array('id', 'start_date')))
         )
       ),
