@@ -8,14 +8,14 @@
     <author>AGH Strategies, LLC</author>
     <email>info@aghstrategies.com</email>
   </maintainer>
-  <releaseDate>2025-01-03</releaseDate>
-  <version>2.7</version>
+  <releaseDate>2026-09-10</releaseDate>
+  <version>2.8</version>
   <develStage>stable</develStage>
   <compatibility>
     <ver>5.51</ver>
   </compatibility>
   <urls>
-    <url desc="documentation">https://aghstrategies.com/content/event-additional-signup-extension</url>
+    <url desc="documentation">https://aghstrategies.com/event-additional-signup-extension</url>
   </urls>
   <civix>
     <namespace>CRM/Eventmembershipsignup</namespace>
