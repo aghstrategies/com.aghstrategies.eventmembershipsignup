@@ -79,7 +79,7 @@ HERESQL;
           'id' => $dao->entity_ref_id,
         ));
       }
-      catch (CiviCRM_API3_Exception $e) {
+      catch (CRM_Core_Exception $e) {
         CRM_Core_Error::debug_var('Cannot find event', $e);
         return;
       }
@@ -145,7 +145,7 @@ HERESQL;
       $objEntity = is_array($objectRef) ? $objectRef['entity_id'] : $objectRef->entity_id;
       $participant = civicrm_api3('participant', 'getSingle', array('id' => $objEntity));
     }
-    catch (CiviCRM_API3_Exception $e) {
+    catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
       CRM_Core_Session::setStatus($error, ts('Error finding your registration for addons', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
     }
@@ -167,7 +167,7 @@ HERESQL;
       }
       $newParticipant = civicrm_api3('participant', 'create', $newPartParams);
     }
-    catch (CiviCRM_API3_Exception $e) {
+    catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
       CRM_Core_Error::debug_var('Problem registering for add-on event', $newPartParams);
       CRM_Core_Session::setStatus($error, ts('Problem registering for add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
@@ -217,7 +217,7 @@ HERESQL;
       }
       $newMembership = civicrm_api3('Membership', 'create', $newMemParams);
     }
-    catch (CiviCRM_API3_Exception $e) {
+    catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
       CRM_Core_Session::setStatus($error, ts('Add-on Membership Problem', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
     }
