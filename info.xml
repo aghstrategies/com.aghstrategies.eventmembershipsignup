@@ -12,14 +12,14 @@
   <version>2.7</version>
   <develStage>stable</develStage>
   <compatibility>
-    <ver>5.38</ver>
+    <ver>5.51</ver>
   </compatibility>
   <urls>
     <url desc="documentation">https://aghstrategies.com/content/event-additional-signup-extension</url>
   </urls>
   <civix>
     <namespace>CRM/Eventmembershipsignup</namespace>
-    <format>24.09.1</format>
+    <format>25.10.2</format>
   </civix>
   <comments>
     An administrator may tie an option in a price field to an event or membership type.  When a site visitor registers for an event and selects a price option, they will be registered for the additional event or have a new or renewed membership with that membership type.
@@ -31,5 +31,6 @@
   <upgrader>CRM_Eventmembershipsignup_Upgrader</upgrader>
   <mixins>
     <mixin>smarty-v2@1.0.3</mixin>
+    <mixin>scan-classes@1.0.0</mixin>
   </mixins>
 </extension>
