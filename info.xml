@@ -8,14 +8,17 @@
     <author>AGH Strategies, LLC</author>
     <email>info@aghstrategies.com</email>
   </maintainer>
-  <releaseDate>2026-09-10</releaseDate>
+  <releaseDate>2026-09-16</releaseDate>
   <version>2.8</version>
   <develStage>stable</develStage>
   <compatibility>
     <ver>5.51</ver>
   </compatibility>
   <urls>
-    <url desc="documentation">https://aghstrategies.com/event-additional-signup-extension</url>
+    <url desc="Main Extension Page">https://civicrm.org/extensions/event-additional-signup</url>
+    <url desc="Documentation">https://aghstrategies.com/event-additional-signup-extension</url>
+    <url desc="Support">https://github.com/aghstrategies/com.aghstrategies.eventmembershipsignup</url>
+    <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
   <civix>
     <namespace>CRM/Eventmembershipsignup</namespace>
