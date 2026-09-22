@@ -9,22 +9,22 @@
 
 class CRM_Eventmembershipsignup_Admin {
 
-  public $entityOptions = array();
+  public $entityOptions = [];
 
   public function __construct() {
-    $this->entityOptions = array(
-      0 => ts('No', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
-    );
+    $this->entityOptions = [
+      0 => ts('No', ['domain' => 'com.aghstrategies.eventmembershipsignup']),
+    ];
     try {
-      $components = civicrm_api3('Setting', 'getvalue', array(
+      $components = civicrm_api3('Setting', 'getvalue', [
         'group' => "CiviCRM Preferences",
         'name' => "enable_components",
-      ));
+      ]);
       if (in_array('CiviMember', $components)) {
-        $this->entityOptions['Membership'] = ts('Membership', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
+        $this->entityOptions['Membership'] = ts('Membership', ['domain' => 'com.aghstrategies.eventmembershipsignup']);
       }
       if (in_array('CiviEvent', $components)) {
-        $this->entityOptions['Participant'] = ts('Participant', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
+        $this->entityOptions['Participant'] = ts('Participant', ['domain' => 'com.aghstrategies.eventmembershipsignup']);
       }
     }
     catch (CRM_Core_Exception $e) {
@@ -93,10 +93,10 @@ class CRM_Eventmembershipsignup_Admin {
               $price_option_id,
               'Integer',
             ],
-            2 => array(
+            2 => [
               $entity_table,
               'String',
-            ),
+            ],
             3 => [
               $ref,
               'Integer',
@@ -120,27 +120,27 @@ HERESQL;
    */
   public function modFieldAdminForm(&$form) {
     $numOptions = $form::NUM_OPTION;
-    $selectors = array();
+    $selectors = [];
     for ($i = 1; $i <= $numOptions; $i++) {
       // Add the field element in the form.
-      $form->add('select', "othersignup[$i]", ts('Additional Signup?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
-      $form->addEntityRef("membershipselect[$i]", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      $form->add('select', "othersignup[$i]", ts('Additional Signup?', ['domain' => 'com.aghstrategies.eventmembershipsignup']), $this->entityOptions);
+      $form->addEntityRef("membershipselect[$i]", ts('Select Membership Type', ['domain' => 'com.aghstrategies.eventmembershipsignup']), [
         'entity' => 'membershipType',
         'multiple' => TRUE,
-        'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
-        'select' => array('minimumInputLength' => 0),
-      ));
-      $form->addEntityRef("eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+        'placeholder' => '- ' . ts('Select Membership Type', ['domain' => 'com.aghstrategies.eventmembershipsignup']) . ' -',
+        'select' => ['minimumInputLength' => 0],
+      ]);
+      $form->addEntityRef("eventselect[$i]", ts('Select Event', ['domain' => 'com.aghstrategies.eventmembershipsignup']), [
         'entity' => 'event',
         'multiple' => TRUE,
-        'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
-        'select' => array('minimumInputLength' => 0),
-        'api' => array(
-          'params' => array(
-            'start_date' => array('>=' => 'NOW')
-          )
-        ),
-      ));
+        'placeholder' => '- ' . ts('Select Event', ['domain' => 'com.aghstrategies.eventmembershipsignup']) . ' -',
+        'select' => ['minimumInputLength' => 0],
+        'api' => [
+          'params' => [
+            'start_date' => ['>=' => 'NOW']
+          ]
+        ],
+      ]);
       $selectors[] = $i;
     }
     $form->assign('numOptions', $numOptions);
@@ -150,9 +150,9 @@ HERESQL;
     // Add the field element in the form
     // Dynamically insert a template block in the page.
     $form->add('select', 'memberSelect', '');
-    CRM_Core_Region::instance('page-body')->add(array(
+    CRM_Core_Region::instance('page-body')->add([
       'template' => $templateFile,
-    ));
+    ]);
   }
 
   /**
@@ -168,14 +168,14 @@ HERESQL;
     }
 
     // The arrays of values for the multiple options that were created.
-    $optionMultiFields = array(
+    $optionMultiFields = [
       'option_label',
       'option_amount',
       'option_financial_type_id',
       'option_count',
       'option_max_value',
       'option_weight',
-    );
+    ];
 
     // Walk through options and only deal with additional signup options.
     foreach ($form->_submitValues['othersignup'] as $price_option_key => $price_option_othersignup) {
@@ -195,7 +195,7 @@ HERESQL;
       }
 
       // Assemble information from the option fields.
-      $vals = array();
+      $vals = [];
       foreach ($optionMultiFields as $f) {
         if (!empty($form->_submitValues[$f][$price_option_key])) {
           $fShort = substr($f, 7);
@@ -225,10 +225,10 @@ HERESQL;
     $form->assign('option_signup_id', 0);
     $form->assign('signupselectvalue', 0);
     $form->assign('eventmembershipvalue', 0);
-    $defaults = array();
+    $defaults = [];
     if (!empty($id)) {
       $sql = "SELECT id, entity_table, entity_ref_id FROM civicrm_option_signup WHERE price_option_id = %1";
-      $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
+      $dao = CRM_Core_DAO::executeQuery($sql, [1 => [$id, 'Integer']]);
       while ($dao->fetch()) {
         if ($dao->entity_table == 'Event') {
           $defaults['othersignup'] = 'Participant';
@@ -242,34 +242,34 @@ HERESQL;
     }
 
     // Add the field element in the form.
-    $form->add('select', 'othersignup', ts('Other Sign Up?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
-    $form->addEntityRef("membershipselect", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+    $form->add('select', 'othersignup', ts('Other Sign Up?', ['domain' => 'com.aghstrategies.eventmembershipsignup']), $this->entityOptions);
+    $form->addEntityRef("membershipselect", ts('Select Membership Type', ['domain' => 'com.aghstrategies.eventmembershipsignup']), [
       'entity' => 'membershipType',
       'multiple' => TRUE,
-      'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
-      'select' => array('minimumInputLength' => 0),
-    ));
-    $form->addEntityRef('eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      'placeholder' => '- ' . ts('Select Membership Type', ['domain' => 'com.aghstrategies.eventmembershipsignup']) . ' -',
+      'select' => ['minimumInputLength' => 0],
+    ]);
+    $form->addEntityRef('eventselect', ts('Select Event', ['domain' => 'com.aghstrategies.eventmembershipsignup']), [
       'entity' => 'event',
       'multiple' => TRUE,
-      'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
-      'select' => array('minimumInputLength' => 0),
-      'api' => array(
-        'params' => array(
-          'start_date' => array('>=' => 'NOW'),
+      'placeholder' => '- ' . ts('Select Event', ['domain' => 'com.aghstrategies.eventmembershipsignup']) . ' -',
+      'select' => ['minimumInputLength' => 0],
+      'api' => [
+        'params' => [
+          'start_date' => ['>=' => 'NOW'],
           'id' => $dao->entity_ref_id ?? NULL,
-          'options' => array('or' => array(array('id', 'start_date')))
-        )
-      ),
-    ));
+          'options' => ['or' => [['id', 'start_date']]]
+        ]
+      ],
+    ]);
 
     $form->setDefaults($defaults);
 
     $templateFile = CRM_Core_Resources::singleton()->getPath('com.aghstrategies.eventmembershipsignup', 'templates/priceoptionOthersignup.tpl');
     // Dynamically insert a template block in the page.
-    CRM_Core_Region::instance('page-body')->add(array(
+    CRM_Core_Region::instance('page-body')->add([
       'template' => $templateFile,
-    ));
+    ]);
   }
 
   /**
@@ -295,7 +295,7 @@ HERESQL;
       default:
         // Clean out additional signup that might be in there.
         $sql = "DELETE FROM civicrm_option_signup WHERE price_option_id = %1";
-        CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
+        CRM_Core_DAO::executeQuery($sql, [1 => [$id, 'Integer']]);
         break;
     }
   }
@@ -316,17 +316,17 @@ HERESQL;
   public static function findOptionByValues($values, $fieldOrOption = 'PriceFieldValue') {
     switch ($fieldOrOption) {
       case 'PriceField':
-        $fields = array(
+        $fields = [
           'sid' => 'price_set_id',
           'label' => 'label',
           'html_type' => 'html_type',
           'is_display_amounts' => 'is_display_amounts',
-        );
+        ];
         break;
 
       case 'PriceFieldValue':
       default:
-        $fields = array(
+        $fields = [
           'fieldId' => 'price_field_id',
           'label' => 'label',
           'amount' => 'amount',
@@ -334,18 +334,18 @@ HERESQL;
           'count' => 'count',
           'max_value' => 'max_value',
           'weight' => 'weight',
-        );
+        ];
         break;
     }
 
-    $searchParams = array(
+    $searchParams = [
       'return' => 'id',
-      'options' => array(
+      'options' => [
         // In case there are two identical values, pull the newest
         'sort' => "id DESC",
         'limit' => 1,
-      ),
-    );
+      ],
+    ];
 
     foreach ($fields as $val => $field) {
       if (!empty($values[$val])) {

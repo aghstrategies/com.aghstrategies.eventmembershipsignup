@@ -62,38 +62,38 @@ WHERE price_option_id = %1
   AND entity_table = 'Event'
 HERESQL;
 
-    $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($option, 'Integer')));
+    $dao = CRM_Core_DAO::executeQuery($sql, [1 => [$option, 'Integer']]);
     while ($dao->fetch()) {
       $eventId = $dao->entity_ref_id;
       try {
-        $event = civicrm_api3('Event', 'getsingle', array(
+        $event = civicrm_api3('Event', 'getsingle', [
           'sequential' => 1,
-          'return' => array(
+          'return' => [
             'max_participants',
             'has_waitlist',
             'waitlist_text',
             'event_full_text',
             'registration_end_date',
             'end_date',
-          ),
+          ],
           'id' => $dao->entity_ref_id,
-        ));
+        ]);
       }
       catch (CRM_Core_Exception $e) {
         CRM_Core_Error::debug_var('Cannot find event', $e);
         return;
       }
       // Registration and/or event is over
-      $endDates = array(
+      $endDates = [
         'end_date',
         'registration_end_date',
-      );
+      ];
       foreach ($endDates as $dateField) {
         if (!empty($event[$dateField])) {
           if (time() > strtotime($event[$dateField])) {
             self::disableElement($element, ts(
               'Registration for one or more of the events in this option is closed.',
-              array('domain' => 'com.aghstrategies.eventmembershipsignup')
+              ['domain' => 'com.aghstrategies.eventmembershipsignup']
             ));
             return;
           }
@@ -106,11 +106,11 @@ HERESQL;
         if (!empty($full)) {
           $waitlistText = ts(
             '%1 You may visit <a href="%2" target="_blank">this form</a> to join the waiting list.',
-            array(
+            [
               1 => $full,
-              2 => CRM_Utils_System::url('civicrm/event/register', array('id' => $eventId, 'reset' => 1), FALSE, NULL, FALSE, TRUE),
+              2 => CRM_Utils_System::url('civicrm/event/register', ['id' => $eventId, 'reset' => 1], FALSE, NULL, FALSE, TRUE),
               'domain' => 'com.aghstrategies.eventmembershipsignup',
-            )
+            ]
           );
           $message = empty($event['has_waitlist']) ? $full : $waitlistText;
           self::disableElement($element, $message);
@@ -143,15 +143,15 @@ HERESQL;
   public static function registerForEventAddons($price_field_value_id, $entityRefId, $objectRef) {
     try {
       $objEntity = is_array($objectRef) ? $objectRef['entity_id'] : $objectRef->entity_id;
-      $participant = civicrm_api3('participant', 'getSingle', array('id' => $objEntity));
+      $participant = civicrm_api3('participant', 'getSingle', ['id' => $objEntity]);
     }
     catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
-      CRM_Core_Session::setStatus($error, ts('Error finding your registration for addons', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+      CRM_Core_Session::setStatus($error, ts('Error finding your registration for addons', ['domain' => 'com.aghstrategies.eventmembershipsignup']), 'error');
     }
     try {
-      $newPartParams = array('event_id' => $entityRefId);
-      $fillFields = array(
+      $newPartParams = ['event_id' => $entityRefId];
+      $fillFields = [
         'contact_id',
         'participant_register_date',
         'participant_source',
@@ -159,7 +159,7 @@ HERESQL;
         'participant_is_pay_later',
         'participant_registered_by_id',
         'participant_role_id',
-      );
+      ];
       foreach ($fillFields as $fillField) {
         if (isset($participant[$fillField])) {
           $newPartParams[$fillField] = $participant[$fillField];
@@ -170,7 +170,7 @@ HERESQL;
     catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
       CRM_Core_Error::debug_var('Problem registering for add-on event', $newPartParams);
-      CRM_Core_Session::setStatus($error, ts('Problem registering for add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+      CRM_Core_Session::setStatus($error, ts('Problem registering for add-on event', ['domain' => 'com.aghstrategies.eventmembershipsignup']), 'error');
     }
   }
 
@@ -203,24 +203,24 @@ HERESQL;
     //sanity checks
     if (empty($participant) && $objectRef->entity_table == 'civicrm_participant' && $objectRef->entity_id) {
       //get some context for a membership add
-      $participant = civicrm_api3('Participant', 'getsingle', array('id' => $objectRef->entity_id));
+      $participant = civicrm_api3('Participant', 'getsingle', ['id' => $objectRef->entity_id]);
     }
     try {
-      $newMemParams = array(
+      $newMemParams = [
         'membership_type_id' => $entityRefId,
         'contact_id' => $participant['contact_id'],
         'is_pay_later' => $participant['participant_is_pay_later'],
-        'source' => ts('Event Sign Up', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
+        'source' => ts('Event Sign Up', ['domain' => 'com.aghstrategies.eventmembershipsignup']),
         'num_terms' => 1,
-      );
-      $memTypes = civicrm_api3('MembershipType', 'get', array('return' => "member_of_contact_id"));
+      ];
+      $memTypes = civicrm_api3('MembershipType', 'get', ['return' => "member_of_contact_id"]);
       $memTypeOrg = $memTypes['values'][$entityRefId]['member_of_contact_id'] ?? NULL;
       if ($memTypeOrg) {
-        $currentMem = civicrm_api3('Membership', 'get', array(
+        $currentMem = civicrm_api3('Membership', 'get', [
           'sequential' => 1,
           'contact_id' => $participant['contact_id'],
-          'options' => array('sort' => "end_date DESC"),
-        ));
+          'options' => ['sort' => "end_date DESC"],
+        ]);
         if ($currentMem['count'] > 0) {
           foreach ($currentMem['values'] as $memV) {
             if (!empty($memTypes['values'][$memV['membership_type_id']])) {
@@ -238,7 +238,7 @@ HERESQL;
     }
     catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
-      CRM_Core_Session::setStatus($error, ts('Add-on Membership Problem', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+      CRM_Core_Session::setStatus($error, ts('Add-on Membership Problem', ['domain' => 'com.aghstrategies.eventmembershipsignup']), 'error');
     }
   }
 
