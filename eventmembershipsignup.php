@@ -176,7 +176,7 @@ LEFT JOIN civicrm_participant p
 WHERE c.id = %1
   AND os.entity_table = 'Event'
 HERESQL;
-    $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($id, 'Integer')));
+    $dao = CRM_Core_DAO::executeQuery($sql, [1 => [$id, 'Integer']]);
 
     while ($dao->fetch()) {
       eventmembershipsignup_updateparticipantstatus(
