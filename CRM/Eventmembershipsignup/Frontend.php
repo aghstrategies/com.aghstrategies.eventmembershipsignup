@@ -7,6 +7,8 @@
  * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
  */
 
+use CRM_Eventmembershipsignup_ExtensionUtil as E;
+
 class CRM_Eventmembershipsignup_Frontend {
 
   /**
@@ -91,10 +93,7 @@ HERESQL;
       foreach ($endDates as $dateField) {
         if (!empty($event[$dateField])) {
           if (time() > strtotime($event[$dateField])) {
-            self::disableElement($element, ts(
-              'Registration for one or more of the events in this option is closed.',
-              array('domain' => 'com.aghstrategies.eventmembershipsignup')
-            ));
+            self::disableElement($element, E::ts('Registration for one or more of the events in this option is closed.'));
             return;
           }
         }
@@ -147,7 +146,7 @@ HERESQL;
     }
     catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
-      CRM_Core_Session::setStatus($error, ts('Error finding your registration for addons', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+      CRM_Core_Session::setStatus($error, E::ts('Error finding your registration for addons'), 'error');
     }
     try {
       $newPartParams = array('event_id' => $entityRefId);
@@ -170,7 +169,7 @@ HERESQL;
     catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
       CRM_Core_Error::debug_var('Problem registering for add-on event', $newPartParams);
-      CRM_Core_Session::setStatus($error, ts('Problem registering for add-on event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+      CRM_Core_Session::setStatus($error, E::ts('Problem registering for add-on event'), 'error');
     }
   }
 
@@ -210,7 +209,7 @@ HERESQL;
         'membership_type_id' => $entityRefId,
         'contact_id' => $participant['contact_id'],
         'is_pay_later' => $participant['participant_is_pay_later'],
-        'source' => ts('Event Sign Up', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
+        'source' => E::ts('Event Sign Up'),
         'num_terms' => 1,
       );
       $memTypes = civicrm_api3('MembershipType', 'get', array('return' => "member_of_contact_id"));
@@ -238,7 +237,7 @@ HERESQL;
     }
     catch (CRM_Core_Exception $e) {
       $error = $e->getMessage();
-      CRM_Core_Session::setStatus($error, ts('Add-on Membership Problem', array('domain' => 'com.aghstrategies.eventmembershipsignup')), 'error');
+      CRM_Core_Session::setStatus($error, E::ts('Add-on Membership Problem'), 'error');
     }
   }
 

@@ -7,13 +7,15 @@
  * Licensed under the GNU Affero Public License 3.0 (see LICENSE.txt)
  */
 
+use CRM_Eventmembershipsignup_ExtensionUtil as E;
+
 class CRM_Eventmembershipsignup_Admin {
 
   public $entityOptions = array();
 
   public function __construct() {
     $this->entityOptions = array(
-      0 => ts('No', array('domain' => 'com.aghstrategies.eventmembershipsignup')),
+      0 => ts('No'),
     );
     try {
       $components = civicrm_api3('Setting', 'getvalue', array(
@@ -21,10 +23,10 @@ class CRM_Eventmembershipsignup_Admin {
         'name' => "enable_components",
       ));
       if (in_array('CiviMember', $components)) {
-        $this->entityOptions['Membership'] = ts('Membership', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
+        $this->entityOptions['Membership'] = ts('Membership');
       }
       if (in_array('CiviEvent', $components)) {
-        $this->entityOptions['Participant'] = ts('Participant', array('domain' => 'com.aghstrategies.eventmembershipsignup'));
+        $this->entityOptions['Participant'] = ts('Participant');
       }
     }
     catch (CRM_Core_Exception $e) {
@@ -123,17 +125,17 @@ HERESQL;
     $selectors = array();
     for ($i = 1; $i <= $numOptions; $i++) {
       // Add the field element in the form.
-      $form->add('select', "othersignup[$i]", ts('Additional Signup?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
-      $form->addEntityRef("membershipselect[$i]", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      $form->add('select', "othersignup[$i]", E::ts('Additional Signup?'), $this->entityOptions);
+      $form->addEntityRef("membershipselect[$i]", E::ts('Select Membership Type'), array(
         'entity' => 'membershipType',
         'multiple' => TRUE,
-        'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+        'placeholder' => '- ' . E::ts('Select Membership Type') . ' -',
         'select' => array('minimumInputLength' => 0),
       ));
-      $form->addEntityRef("eventselect[$i]", ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+      $form->addEntityRef("eventselect[$i]", E::ts('Select Event'), array(
         'entity' => 'event',
         'multiple' => TRUE,
-        'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+        'placeholder' => '- ' . E::ts('Select Event') . ' -',
         'select' => array('minimumInputLength' => 0),
         'api' => array(
           'params' => array(
@@ -242,17 +244,17 @@ HERESQL;
     }
 
     // Add the field element in the form.
-    $form->add('select', 'othersignup', ts('Other Sign Up?', array('domain' => 'com.aghstrategies.eventmembershipsignup')), $this->entityOptions);
-    $form->addEntityRef("membershipselect", ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+    $form->add('select', 'othersignup', E::ts('Other Sign Up?'), $this->entityOptions);
+    $form->addEntityRef("membershipselect", E::ts('Select Membership Type', array(
       'entity' => 'membershipType',
       'multiple' => TRUE,
-      'placeholder' => '- ' . ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+      'placeholder' => '- ' . E::ts('Select Membership Type', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
       'select' => array('minimumInputLength' => 0),
     ));
-    $form->addEntityRef('eventselect', ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')), array(
+    $form->addEntityRef('eventselect', E::ts('Select Event'), array(
       'entity' => 'event',
       'multiple' => TRUE,
-      'placeholder' => '- ' . ts('Select Event', array('domain' => 'com.aghstrategies.eventmembershipsignup')) . ' -',
+      'placeholder' => '- ' . E::ts('Select Event') . ' -',
       'select' => array('minimumInputLength' => 0),
       'api' => array(
         'params' => array(
